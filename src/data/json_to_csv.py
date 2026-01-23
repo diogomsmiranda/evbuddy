@@ -5,8 +5,8 @@ from pathlib import Path
 
 import pandas as pd
 
-INPUT_DIR = Path("data/raw/opendata_datasets(json)")
-OUTPUT_DIR = Path("data/raw/opendata_datasets(csv)")
+INPUT_DIR = Path("data/raw/opendata_datasets_json")
+OUTPUT_DIR = Path("data/raw/opendata_datasets_csv")
 
 
 def load_records(path: Path) -> list[dict]:

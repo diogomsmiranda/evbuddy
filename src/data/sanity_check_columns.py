@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pandas as pd
 
-RAW_DIR = Path("data/raw/opendata_datasets(csv)")
-INTERIM_DIR = Path("data/interim/opendata_datasets(csv)")
+RAW_DIR = Path("data/raw/opendata_datasets_csv")
+INTERIM_DIR = Path("data/interim/opendata_datasets_csv")
 
 
 def load_columns(path: Path) -> list[str]:

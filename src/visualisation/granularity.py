@@ -4,8 +4,8 @@ import json
 import pandas as pd
 
 
-INPUT_DIR = Path("data/raw/opendata_datasets(csv)")
-OUTPUT_DIR = Path("data/interim/opendata_datasets(csv)")
+INPUT_DIR = Path("data/raw/opendata_datasets_csv")
+OUTPUT_DIR = Path("data/interim/opendata_datasets_csv")
 
 def derive_opening_hours_variables(df: pd.DataFrame) -> pd.DataFrame:
     """Derive opening hours related variables from existing columns."""

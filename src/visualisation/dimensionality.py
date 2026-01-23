@@ -5,7 +5,7 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-INPUT_DIR = Path("data/raw/opendata_datasets(csv)")
+INPUT_DIR = Path("data/raw/opendata_datasets_csv")
 OUTPUT_DIR = Path("reports/figures/dimensionality")
 
 
