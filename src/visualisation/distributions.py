@@ -5,8 +5,8 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-INPUT_FILE = Path("data/interim/stations_extracted.csv")
-OUTPUT_DIR = Path("reports/figures/distributions/interim")
+INPUT_FILE = Path("data/interim/stations.csv")
+OUTPUT_DIR = Path("reports/figures/distributions/interim/stations")
 EXCLUDE_COLUMNS = {"ports"}
 
 

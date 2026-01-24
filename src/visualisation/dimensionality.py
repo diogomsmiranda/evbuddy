@@ -7,9 +7,9 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 INPUT_RAW_DIR = Path("data/raw/opendata_datasets_csv")
-INPUT_INTERIM = Path("data/interim/stations_extracted.csv")
+INPUT_INTERIM = Path("data/interim/stations.csv")
 OUTPUT_RAW_DIR = Path("reports/figures/dimensionality/raw")
-OUTPUT_INTERIM_DIR = Path("reports/figures/dimensionality/interim")
+OUTPUT_INTERIM_DIR = Path("reports/figures/dimensionality/interim/stations")
 
 
 def plot_records_vs_variables(df: pd.DataFrame, title: str, output_path: Path) -> None:

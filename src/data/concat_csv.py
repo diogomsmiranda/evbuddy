@@ -49,7 +49,7 @@ def main() -> None:
 
     final_df = pd.concat(dataframes, ignore_index=True)
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / "opendata_2022_2026.csv"
+    output_path = OUTPUT_DIR / "locations.csv"
     final_df.to_csv(output_path, index=False)
     print(f"Wrote {output_path} ({len(final_df)} rows)")
 
