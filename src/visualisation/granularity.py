@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 from pathlib import Path
 import json
 
@@ -6,6 +8,7 @@ import pandas as pd
 
 INPUT_DIR = Path("data/raw/opendata_datasets_csv")
 OUTPUT_DIR = Path("data/interim/oh_opendata_datasets_csv")
+
 
 def derive_opening_hours_variables(df: pd.DataFrame) -> pd.DataFrame:
     """Derive opening hours related variables from existing columns."""
@@ -38,8 +41,7 @@ def derive_opening_hours_variables(df: pd.DataFrame) -> pd.DataFrame:
     df = df.drop(columns=["opening_hours"])
     return df
 
-    
-    
+
 if __name__ == "__main__":
     OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
     paths = sorted(INPUT_DIR.glob("*.csv"))

@@ -1,12 +1,16 @@
 from __future__ import annotations
 
-import json
-from pathlib import Path
-
 import pandas as pd
+import json
 
-INPUT_DIR = Path("data/raw/opendata_datasets_json")
-OUTPUT_DIR = Path("data/raw/opendata_datasets_csv")
+from pathlib import Path
+import sys
+
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.utils import RAW_OPENDATA_CSV_DIR, RAW_OPENDATA_JSON_DIR  # noqa: E402
 
 
 def load_records(path: Path) -> list[dict]:
@@ -32,6 +36,7 @@ def normalize_records(records: list[dict]) -> pd.DataFrame:
     for column in df.columns:
         if df[column].map(lambda value: isinstance(value, (list, dict))).any():
             df[column] = df[column].map(
+                # json-encode nested structures for json.loads use later
                 lambda value: json.dumps(value, ensure_ascii=False)
                 if isinstance(value, (list, dict))
                 else value
@@ -40,7 +45,9 @@ def normalize_records(records: list[dict]) -> pd.DataFrame:
     return df
 
 
-def convert_all(input_dir: Path = INPUT_DIR, output_dir: Path = OUTPUT_DIR) -> None:
+def convert_all(
+    input_dir: Path = RAW_OPENDATA_JSON_DIR, output_dir: Path = RAW_OPENDATA_CSV_DIR
+) -> None:
     output_dir.mkdir(parents=True, exist_ok=True)
 
     for path in sorted(input_dir.glob("*.json")):

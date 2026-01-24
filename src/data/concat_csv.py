@@ -1,10 +1,19 @@
-from pathlib import Path
+from __future__ import annotations
 
 import pandas as pd
+from pathlib import Path
+import sys
 
-INPUT_DIR_RAW = Path("data/raw/opendata_datasets_csv")
-INPUT_DIR_INTERIM = Path("data/interim/oh_opendata_datasets_csv")
-OUTPUT_DIR = Path("data/interim")
+REPO_ROOT = Path(__file__).resolve().parents[2]
+if str(REPO_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPO_ROOT))
+
+from src.utils import (  # noqa: E402
+    INTERIM_DIR,
+    INTERIM_LOCATIONS_CSV,
+    INTERIM_OH_OPENDATA_CSV_DIR,
+    RAW_OPENDATA_CSV_DIR,
+)
 
 
 def get_reference_columns(raw_paths: list[Path]) -> list[str]:
@@ -29,29 +38,32 @@ def load_with_schema_check(path: Path, reference_columns: list[str]) -> pd.DataF
 def main() -> None:
     raw_paths = sorted(
         p
-        for p in INPUT_DIR_RAW.glob("*.csv")
+        for p in RAW_OPENDATA_CSV_DIR.glob("*.csv")
         if p.stem.startswith("2022_") or p.stem.startswith("2023_")
     )
     if not raw_paths:
-        raise FileNotFoundError(f"No 2022/2023 CSV files found in {INPUT_DIR_RAW}")
+        raise FileNotFoundError(
+            f"No 2022/2023 CSV files found in {RAW_OPENDATA_CSV_DIR}"
+        )
 
-    interim_paths = sorted(INPUT_DIR_INTERIM.glob("*.csv"))
+    interim_paths = sorted(INTERIM_OH_OPENDATA_CSV_DIR.glob("*.csv"))
     if not interim_paths:
-        raise FileNotFoundError(f"No interim CSV files found in {INPUT_DIR_INTERIM}")
+        raise FileNotFoundError(
+            f"No interim CSV files found in {INTERIM_OH_OPENDATA_CSV_DIR}"
+        )
 
     reference_columns = get_reference_columns(raw_paths)
-    dataframes = [
-        load_with_schema_check(path, reference_columns) for path in raw_paths
-    ]
+    dataframes = [load_with_schema_check(path, reference_columns) for path in raw_paths]
     dataframes.extend(
         load_with_schema_check(path, reference_columns) for path in interim_paths
     )
 
     final_df = pd.concat(dataframes, ignore_index=True)
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    output_path = OUTPUT_DIR / "locations.csv"
+    INTERIM_DIR.mkdir(parents=True, exist_ok=True)
+    output_path = INTERIM_LOCATIONS_CSV
     final_df.to_csv(output_path, index=False)
     print(f"Wrote {output_path} ({len(final_df)} rows)")
 
+
 if __name__ == "__main__":
-    main()    
+    main()
