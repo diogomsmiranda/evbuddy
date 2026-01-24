@@ -7,7 +7,7 @@ import matplotlib.pyplot as plt
 import pandas as pd
 
 INPUT_RAW_DIR = Path("data/raw/opendata_datasets_csv")
-INPUT_INTERIM = Path("data/interim/opendata_2022_2026.csv")
+INPUT_INTERIM = Path("data/interim/stations_extracted.csv")
 OUTPUT_RAW_DIR = Path("reports/figures/dimensionality/raw")
 OUTPUT_INTERIM_DIR = Path("reports/figures/dimensionality/interim")
 
