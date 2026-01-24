@@ -5,9 +5,9 @@ from pathlib import Path
 import matplotlib.pyplot as plt
 import pandas as pd
 
-INPUT_FILE = Path("data/interim/opendata_2022_2026.csv")
+INPUT_FILE = Path("data/interim/stations_extracted.csv")
 OUTPUT_DIR = Path("reports/figures/distributions/interim")
-EXCLUDE_COLUMNS = {"stations"}
+EXCLUDE_COLUMNS = {"ports"}
 
 
 def plot_value_counts(series: pd.Series, title: str, output_path: Path) -> None:
@@ -46,6 +46,7 @@ def main() -> None:
             continue
         safe_name = "".join(ch if ch.isalnum() or ch in ("-", "_") else "_" for ch in column)
         output_path = OUTPUT_DIR / f"{safe_name}.png"
+        print(f"Plotting distribution for column '{column}'...")
         plot_value_counts(df[column], title=column, output_path=output_path)
 
 
