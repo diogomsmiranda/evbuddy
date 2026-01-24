@@ -1,16 +1,12 @@
 from __future__ import annotations
 
+from pathlib import Path
+import sys
+
 import matplotlib.pyplot as plt
 import pandas as pd
 
-import sys
-from pathlib import Path
-
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.utils import (  # noqa: E402
+from src.utils import (
     INTERIM_LOCATIONS_CSV,
     INTERIM_PORTS_CSV,
     INTERIM_STATIONS_CSV,
@@ -29,7 +25,9 @@ OUTPUT_INTERIM_DIR = Path("reports/figures/dimensionality/interim")
 def plot_records_vs_variables(df: pd.DataFrame, title: str, output_path: Path) -> None:
     values = {"nr records": df.shape[0], "nr variables": df.shape[1]}
     fig, ax = plt.subplots(figsize=(4, 2))
+    labels = list(values.keys())
     heights = list(values.values())
+    ax.bar(labels, heights, color="#2f6f8f")
     ax.set_title(title)
     ax.set_ylabel("Count")
     ax.set_ylim(bottom=0)
