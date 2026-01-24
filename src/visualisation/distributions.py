@@ -1,16 +1,12 @@
 from __future__ import annotations
 
-import sys
 from pathlib import Path
+import sys
 
 import matplotlib.pyplot as plt
 import pandas as pd
 
-REPO_ROOT = Path(__file__).resolve().parents[2]
-if str(REPO_ROOT) not in sys.path:
-    sys.path.insert(0, str(REPO_ROOT))
-
-from src.utils import INTERIM_LOCATIONS_CSV, INTERIM_PORTS_CSV, INTERIM_STATIONS_CSV  # noqa: E402
+from src.utils import INTERIM_LOCATIONS_CSV, INTERIM_PORTS_CSV, INTERIM_STATIONS_CSV
 
 DATASETS = {
     "locations": {
@@ -40,7 +36,10 @@ def plot_value_counts(series: pd.Series, title: str, output_path: Path) -> None:
     values = counts.values.tolist()
     width = max(8, min(0.5 * len(labels), 24))
     fig, ax = plt.subplots(figsize=(width, 6))
-    ax.bar(labels, values, color="#2f6f8f")
+    bars = ax.bar(labels, values, color="#2f6f8f")
+    ax.bar_label(
+        bars, labels=[str(v) for v in values], padding=2, fontsize=8
+    )  # only ran with "ports" because of bar density
     ax.set_title(title)
     ax.set_xlabel("Value")
     ax.set_ylabel("Count")

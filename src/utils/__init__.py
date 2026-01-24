@@ -1,4 +1,4 @@
-from .utils import (
+from .utils import (  # noqa: F401
     DATA_DIR,
     INTERIM_DIR,
     INTERIM_LOCATIONS_CSV,

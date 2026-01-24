@@ -1,13 +1,9 @@
 from __future__ import annotations
 
-from pathlib import Path
+import pandas as pd
 import json
 
-import pandas as pd
-
-
-INPUT_DIR = Path("data/raw/opendata_datasets_csv")
-OUTPUT_DIR = Path("data/interim/oh_opendata_datasets_csv")
+from src.utils import RAW_OPENDATA_CSV_DIR, INTERIM_OH_OPENDATA_CSV_DIR
 
 
 def derive_opening_hours_variables(df: pd.DataFrame) -> pd.DataFrame:
@@ -42,14 +38,20 @@ def derive_opening_hours_variables(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-if __name__ == "__main__":
-    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
-    paths = sorted(INPUT_DIR.glob("*.csv"))
+def main() -> None:
+    INTERIM_OH_OPENDATA_CSV_DIR.mkdir(parents=True, exist_ok=True)
+    paths = sorted(RAW_OPENDATA_CSV_DIR.glob("*.csv"))
     for path in paths:
         df = pd.read_csv(path)
         file_tag = path.stem
         result = derive_opening_hours_variables(df)
         if result is not None:
-            output_path = OUTPUT_DIR / f"{file_tag}_with_opening_hours.csv"
+            output_path = (
+                INTERIM_OH_OPENDATA_CSV_DIR / f"{file_tag}_with_opening_hours.csv"
+            )
             result.to_csv(output_path, index=False)
             print(f"Wrote {output_path} ({len(result)} rows)")
+
+
+if __name__ == "__main__":
+    main()
