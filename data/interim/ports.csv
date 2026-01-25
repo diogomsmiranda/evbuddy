@@ -1,4 +1,4 @@
-id,connector_type,power_kw,charging_mechanism,last_updated,notes,reservable,status,authentication_id,payment_required,station_id,station_location_id
+port_id,port_connector_type,port_power_kw,port_charging_mechanism,port_last_updated,port_notes,port_reservable,port_status,port_authentication_id,port_payment_required,port_station_id,port_station_location_id
 624,WALL_OUTLET,3.6,SOCKET,2022-09-26T18:44:45Z,,False,AVAILABLE,A1,True,22,2000
 625,MENNEKES,3.6,SOCKET,2022-09-26T18:44:45Z,,False,AVAILABLE,A1,True,22,2000
 626,WALL_OUTLET,3.6,SOCKET,2022-09-25T01:00:41Z,,False,AVAILABLE,A1,True,22,2000
