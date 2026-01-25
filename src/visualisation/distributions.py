@@ -12,12 +12,12 @@ DATASETS = {
     "locations": {
         "input": INTERIM_LOCATIONS_CSV,
         "output": Path("reports/figures/distributions/interim/locations"),
-        "exclude": {"stations"},
+        "exclude": {"loc_stations"},
     },
     "stations": {
         "input": INTERIM_STATIONS_CSV,
         "output": Path("reports/figures/distributions/interim/stations"),
-        "exclude": {"ports"},
+        "exclude": {"st_ports"},
     },
     "ports": {
         "input": INTERIM_PORTS_CSV,
@@ -31,6 +31,9 @@ def plot_value_counts(series: pd.Series, title: str, output_path: Path) -> None:
     counts = (
         series.astype("string").fillna("<NA>").value_counts(dropna=False).sort_index()
     )
+    # print counts for the column "last_updated" if title == "last_updated"
+    if "last_updated" in title:
+        print(f"Value counts for column '{title}':\n{counts}\n")
 
     labels = counts.index.tolist()
     values = counts.values.tolist()
