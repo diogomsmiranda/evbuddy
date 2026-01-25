@@ -46,7 +46,7 @@ def first_dict(value: object) -> dict:
 
 
 def extract_nested(
-    input: Path, to_nest: str, output: Path, parent: str, parent_columns: list[str]
+    input: Path, to_nest: str, output: Path, parent_columns: list[str]
 ) -> None:
     if not input.exists():
         raise FileNotFoundError(f"Dataset not found at {input}")
@@ -54,13 +54,15 @@ def extract_nested(
     df = pd.read_csv(input)
     records: list[dict] = []
     for _, row in df.iterrows():
+        if to_nest not in row:
+            print(f"EXTRACT: Missing nested column '{to_nest}' in input.")
+            continue
         nested_value = parse_json_value(row.get(to_nest))
         if not isinstance(nested_value, list):
             print(f"EXTRACT: Invalid data type: {type(nested_value)}")
             continue
 
         parent_data = row[parent_columns].to_dict()
-        parent_data = {f"{parent}_{key}": value for key, value in parent_data.items()}
 
         for item in nested_value:
             if not isinstance(item, dict):
@@ -81,6 +83,18 @@ def extract_nested(
                 item.pop("authentications", None)
             records.append({**item, **parent_data})
     nested_df = pd.json_normalize(records)
+    if output == OUTPUT_PATHS["stations"]:
+        nested_df = nested_df.add_prefix("st_")
+        if "st_loc_id" in nested_df.columns:
+            nested_df = nested_df.rename(columns={"st_loc_id": "st_location_id"})
+    elif output == OUTPUT_PATHS["ports"]:
+        nested_df = nested_df.add_prefix("port_")
+        if "port_st_id" in nested_df.columns:
+            nested_df = nested_df.rename(columns={"port_st_id": "port_station_id"})
+        if "port_st_location_id" in nested_df.columns:
+            nested_df = nested_df.rename(
+                columns={"port_st_location_id": "port_station_location_id"}
+            )
     for column in nested_df.columns:
         if nested_df[column].map(lambda value: isinstance(value, (list, dict))).any():
             nested_df[column] = nested_df[column].map(
@@ -102,18 +116,16 @@ def main(argv: list[str] | None = None) -> None:
     if args[0] == "stations":
         extract_nested(
             input=INPUT_PATHS["locations"],
-            to_nest="stations",
+            to_nest="loc_stations",
             output=OUTPUT_PATHS["stations"],
-            parent="location",
-            parent_columns=["id"],
+            parent_columns=["loc_id"],
         )
     else:
         extract_nested(
             input=OUTPUT_PATHS["stations"],
-            to_nest="ports",
+            to_nest="st_ports",
             output=OUTPUT_PATHS["ports"],
-            parent="station",
-            parent_columns=["id", "location_id"],
+            parent_columns=["st_id", "st_location_id"],
         )
 
 

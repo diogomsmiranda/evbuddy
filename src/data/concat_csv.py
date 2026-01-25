@@ -54,9 +54,10 @@ def main() -> None:
         load_with_schema_check(path, reference_columns) for path in interim_paths
     )
 
-    final_df = pd.concat(dataframes, ignore_index=True)
+    final_df = pd.concat(dataframes, ignore_index=True).add_prefix("loc_")
     INTERIM_DIR.mkdir(parents=True, exist_ok=True)
     output_path = INTERIM_LOCATIONS_CSV
+    final_df = final_df.drop_duplicates().reset_index(drop=True)
     final_df.to_csv(output_path, index=False)
     print(f"Wrote {output_path} ({len(final_df)} rows)")
 
