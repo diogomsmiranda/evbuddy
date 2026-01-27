@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import pandas as pd
+import matplotlib.pyplot as plt
+import seaborn as sns
+from pathlib import Path
 
 from src.utils import INTERIM_PORTS_CSV
+
+OUTPUT_DIR = Path("reports/figures")
 
 
 def analyze_ports(df: pd.DataFrame) -> pd.DataFrame:
@@ -128,6 +133,44 @@ def main() -> None:
     print("\nMost common connector/power/mechanism combinations:")
     combos = combo_frequencies(df)
     print(combos.to_string(index=False))
+
+    print("\nAll distinct connector/power/mechanism combinations:")
+    print(
+        combos[
+            ["port_connector_type", "port_power_kw", "port_charging_mechanism"]
+        ].to_string(index=False)
+    )
+
+    # Correlation across the categorical fields via one-hot encoding
+    cat_df = df[
+        ["port_connector_type", "port_power_kw", "port_charging_mechanism"]
+    ].copy()
+    cat_df["port_power_kw"] = cat_df["port_power_kw"].astype("category")
+    dummies = pd.get_dummies(cat_df, dtype=int)
+    corr_matrix = dummies.corr()
+    print("\nCorrelation matrix (one-hot encoded connector/power/mechanism):")
+    print(corr_matrix)
+
+    # Plot correlation matrix using seaborn heatmap
+    OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
+    plt.figure(figsize=(10, 8))
+    sns.heatmap(
+        corr_matrix,
+        vmin=-1,
+        vmax=1,
+        cmap="coolwarm",
+        annot=False,
+        square=True,
+        cbar_kws={"shrink": 0.8},
+    )
+    plt.title("Correlation: connector / power_kw / charging_mechanism")
+    plt.xticks(rotation=90)
+    plt.yticks(rotation=0)
+    plt.tight_layout()
+    corr_path = OUTPUT_DIR / "ports_correlation.png"
+    plt.savefig(corr_path, dpi=150)
+    plt.close()
+    print(f"Saved correlation heatmap to {corr_path}")
 
     combos_by_station = combo_frequencies_by_station(df)
     multi_combo_stations = combos_by_station.groupby("port_station_id").filter(
