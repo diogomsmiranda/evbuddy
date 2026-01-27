@@ -105,6 +105,12 @@ def extract_nested(
                 if isinstance(value, (list, dict))
                 else value
             )
+    if parent_columns == ["loc_id"]:
+        nested_df["st_id"] = pd.to_numeric(nested_df["st_id"], errors="coerce")
+        nested_df = nested_df.sort_values(["st_id"]).reset_index(drop=True)
+    else:
+        nested_df["port_id"] = pd.to_numeric(nested_df["port_id"], errors="coerce")
+        nested_df = nested_df.sort_values(["port_id"]).reset_index(drop=True)
     nested_df.to_csv(output, index=False)
     print(f"Wrote {output} ({len(nested_df)} rows)")
 
