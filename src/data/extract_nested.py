@@ -88,7 +88,9 @@ def extract_nested(
         if "st_loc_id" in nested_df.columns:
             nested_df = nested_df.rename(columns={"st_loc_id": "st_location_id"})
     elif output == OUTPUT_PATHS["ports"]:
-        nested_df = nested_df.add_prefix("port_")
+        for col in nested_df.columns:
+            if not col.startswith("port_"):
+                nested_df = nested_df.rename(columns={col: f"port_{col}"})
         if "port_st_id" in nested_df.columns:
             nested_df = nested_df.rename(columns={"port_st_id": "port_station_id"})
         if "port_st_location_id" in nested_df.columns:
