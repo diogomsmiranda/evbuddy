@@ -69,8 +69,9 @@ def extract_nested(
                 print(f"EXTRACT: Skipping invalid item in {to_nest}")
                 continue
             item.pop("coordinates", None)
-            if to_nest == "ports":
+            if to_nest == "st_ports":
                 status_data = first_dict(item.get("port_status"))
+                print(f"EXTRACT: port_status data: {status_data}")
                 if "status" in status_data:
                     item["status"] = status_data["status"]
                 item.pop("port_status", None)
