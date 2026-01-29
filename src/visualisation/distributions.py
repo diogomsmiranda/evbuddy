@@ -6,7 +6,12 @@ import sys
 import matplotlib.pyplot as plt
 import pandas as pd
 
-from src.utils import INTERIM_LOCATIONS_CSV, INTERIM_PORTS_CSV, INTERIM_STATIONS_CSV
+from src.utils import (
+    INTERIM_LOCATIONS_CSV,
+    INTERIM_PORTS_CSV,
+    INTERIM_STATIONS_CSV,
+    INTERIM_TIMESERIES_CSV,
+)
 
 DATASETS = {
     "locations": {
@@ -22,6 +27,11 @@ DATASETS = {
     "ports": {
         "input": INTERIM_PORTS_CSV,
         "output": Path("reports/figures/distributions/interim/ports"),
+        "exclude": set(),
+    },
+    "timeseries": {
+        "input": INTERIM_TIMESERIES_CSV,
+        "output": Path("reports/figures/distributions/interim/stations_timeseries"),
         "exclude": set(),
     },
 }

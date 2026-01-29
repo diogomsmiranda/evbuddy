@@ -13,3 +13,5 @@ INTERIM_OH_OPENDATA_CSV_DIR = INTERIM_DIR / "oh_opendata_datasets_csv"
 INTERIM_LOCATIONS_CSV = INTERIM_DIR / "locations.csv"
 INTERIM_STATIONS_CSV = INTERIM_DIR / "stations.csv"
 INTERIM_PORTS_CSV = INTERIM_DIR / "ports.csv"
+
+INTERIM_TIMESERIES_CSV = INTERIM_DIR / "features/stations_timeseries.csv"
