@@ -15,3 +15,6 @@ INTERIM_STATIONS_CSV = INTERIM_DIR / "stations.csv"
 INTERIM_PORTS_CSV = INTERIM_DIR / "ports.csv"
 
 INTERIM_TIMESERIES_CSV = INTERIM_DIR / "features/stations_timeseries.csv"
+INTERIM_TIMESERIES_ENCODED_CSV = (
+    INTERIM_DIR / "features/stations_timeseries_encoded.csv"
+)
