@@ -200,6 +200,8 @@ def build_station_timeseries(
 
             record.pop("st_ports", None)
             record.pop("loc_stations", None)
+            record.pop("loc_last_updated", None)
+            record.pop("loc_last_updated_parsed", None)
 
             records.append(record)
 
