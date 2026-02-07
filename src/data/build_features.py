@@ -43,6 +43,32 @@ def preprocess_locations(loc_df: pd.DataFrame) -> pd.DataFrame:
         loc_df["loc_last_updated"], errors="coerce", utc=True
     )
 
+    time_cols = [
+        "loc_opening_hours_hour_begin",
+        "loc_opening_hours_hour_end",
+    ]
+
+    for col in time_cols:
+        if col not in loc_df.columns:
+            continue
+
+        # Normalize to minutes since midnight, treating 24:00 as 1440.
+        normalized = loc_df[col].astype(str).str.strip()
+        normalized = normalized.replace(
+            {
+                "24:00": "24:00",
+                "0:00": "00:00",
+            }
+        )
+        times = pd.to_datetime(
+            normalized.replace({"24:00": "00:00"}),
+            format="%H:%M",
+            errors="coerce",
+        )
+        minutes = times.dt.hour * 60 + times.dt.minute
+        minutes = minutes.where(normalized != "24:00", other=1440)
+        loc_df[col] = minutes
+
     loc_df = (
         loc_df.sort_values(["loc_id", "loc_last_updated_parsed"]).drop_duplicates(
             subset=["loc_id", "loc_last_updated"], keep="last"
