@@ -10,6 +10,7 @@ from src.utils import (
     INTERIM_LOCATIONS_CSV,
     INTERIM_PORTS_CSV,
     INTERIM_STATIONS_CSV,
+    INTERIM_TIMESERIES_ENCODED_CSV,
     RAW_OPENDATA_CSV_DIR,
 )
 
@@ -17,6 +18,7 @@ INTERIM_DATASETS = {
     "locations": INTERIM_LOCATIONS_CSV,
     "stations": INTERIM_STATIONS_CSV,
     "ports": INTERIM_PORTS_CSV,
+    "timeseries": INTERIM_TIMESERIES_ENCODED_CSV,
 }
 OUTPUT_RAW_DIR = Path("reports/figures/dimensionality/raw")
 OUTPUT_INTERIM_DIR = Path("reports/figures/dimensionality/interim")
