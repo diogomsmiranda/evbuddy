@@ -17,8 +17,15 @@ def feature_selection_variance_threshold(
     if not input.exists():
         raise FileNotFoundError(f"Dataset not found at {input}")
 
-    df = pd.read_csv(input)
-    numeric_df = df.apply(pd.to_numeric, errors="coerce")
+    df = pd.read_csv(input, parse_dates=["snapshot_ts"])
+    snapshot_ts = None
+    if "snapshot_ts" in df.columns:
+        snapshot_ts = df["snapshot_ts"]
+        working_df = df.drop(columns=["snapshot_ts"])
+    else:
+        working_df = df
+
+    numeric_df = working_df.apply(pd.to_numeric, errors="coerce")
     numeric_cols = numeric_df.columns[numeric_df.notna().all()]
     selector = VarianceThreshold(threshold=threshold)
     selector.fit(numeric_df[numeric_cols])
@@ -34,7 +41,17 @@ def feature_selection_variance_threshold(
         for col in dropped_columns:
             print(col)
 
-    selected_df = df[selected_columns]
+    non_numeric_cols = working_df.columns.difference(numeric_cols)
+    if len(non_numeric_cols) > 0:
+        print("FEATURE_SELECTION: Non-numeric columns excluded:")
+        for col in non_numeric_cols:
+            print(col)
+    else:
+        print("FEATURE_SELECTION: No non-numeric columns excluded.")
+
+    selected_df = working_df[selected_columns]
+    if snapshot_ts is not None:
+        selected_df = pd.concat([snapshot_ts, selected_df], axis=1)
     selected_df.to_csv(output, index=False)
     print(f"FEATURE_SELECTION: Selected features saved to {output}")
 
