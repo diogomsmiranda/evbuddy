@@ -238,6 +238,12 @@ def build_station_timeseries(
 
     result_df = pd.DataFrame(records)
     if not result_df.empty:
+        result_df["snapshot_ts_parsed"] = pd.to_datetime(
+            result_df["snapshot_ts"], errors="coerce", utc=True
+        )
+        epoch_cutoff = pd.Timestamp("1971-01-01", tz="UTC")
+        result_df = result_df[result_df["snapshot_ts_parsed"] >= epoch_cutoff].copy()
+        result_df = result_df.drop(columns=["snapshot_ts_parsed"])
         result_df = result_df.sort_values(["st_id", "snapshot_ts"]).reset_index(
             drop=True
         )
