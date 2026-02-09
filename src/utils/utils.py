@@ -18,3 +18,7 @@ INTERIM_TIMESERIES_CSV = INTERIM_DIR / "features/stations_timeseries.csv"
 INTERIM_TIMESERIES_ENCODED_CSV = (
     INTERIM_DIR / "features/stations_timeseries_encoded.csv"
 )
+
+INTERIM_TIMESERIES_SELECTED_CSV = (
+    INTERIM_DIR / "features/stations_timeseries_selected.csv"
+)
