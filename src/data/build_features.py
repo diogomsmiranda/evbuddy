@@ -224,8 +224,11 @@ def build_station_timeseries(
             record.update(st_row)
             record.update(loc_row)
 
+            record.pop("st_label", None)
             record.pop("st_ports", None)
+            record.pop("st_notes", None)
             record.pop("loc_stations", None)
+            record.pop("loc_address_address_string", None)
             record.pop("loc_last_updated", None)
             record.pop("loc_last_updated_parsed", None)
 
