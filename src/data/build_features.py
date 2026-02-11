@@ -43,6 +43,17 @@ def preprocess_locations(loc_df: pd.DataFrame) -> pd.DataFrame:
         loc_df["loc_last_updated"], errors="coerce", utc=True
     )
 
+    if "loc_onstreet_location" in loc_df.columns:
+        loc_df["loc_onstreet_location"] = (
+            loc_df["loc_onstreet_location"]
+            .astype(str)
+            .str.strip()
+            .str.lower()
+            .map({"true": 1, "false": 0})
+            .fillna(0)
+            .astype(int)
+        )
+
     time_cols = [
         "loc_opening_hours_hour_begin",
         "loc_opening_hours_hour_end",
