@@ -10,7 +10,7 @@ from src.utils import (
     INTERIM_LOCATIONS_CSV,
     INTERIM_PORTS_CSV,
     INTERIM_STATIONS_CSV,
-    INTERIM_TIMESERIES_CSV,
+    INTERIM_TIMESERIES_SELECTED_CSV,
 )
 
 DATASETS = {
@@ -30,8 +30,10 @@ DATASETS = {
         "exclude": set(),
     },
     "timeseries": {
-        "input": INTERIM_TIMESERIES_CSV,
-        "output": Path("reports/figures/distributions/interim/stations_timeseries"),
+        "input": INTERIM_TIMESERIES_SELECTED_CSV,
+        "output": Path(
+            "reports/figures/distributions/interim/stations_timeseries_selected"
+        ),
         "exclude": set(),
     },
 }
