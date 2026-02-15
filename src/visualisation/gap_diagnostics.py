@@ -16,6 +16,7 @@ class GapStats:
     n_rows: int
     n_stations: int
     n_locations: Optional[int]
+    timestamps_per_year: pd.Series
     rows_per_station_desc: pd.Series
     gap_hours_desc: pd.Series
     segment_length_desc: pd.Series
@@ -68,6 +69,9 @@ def compute_gap_stats(
         if (location_col and location_col in df.columns)
         else None
     )
+    timestamps_per_year = (
+        df[time_col].dt.year.value_counts().sort_index().rename("timestamps")
+    )
 
     # Rows per station
     rows_per_station = df.groupby(station_col, dropna=True).size()
@@ -100,6 +104,7 @@ def compute_gap_stats(
         n_rows=n_rows,
         n_stations=n_stations,
         n_locations=n_locations,
+        timestamps_per_year=timestamps_per_year,
         rows_per_station_desc=rows_per_station_desc,
         gap_hours_desc=gap_hours_desc,
         segment_length_desc=segment_length_desc,
@@ -178,6 +183,9 @@ def print_gap_report(stats: GapStats) -> None:
     print(f"Unique stations: {stats.n_stations:,}")
     if stats.n_locations is not None:
         print(f"Unique locations: {stats.n_locations:,}")
+
+    print("\n=== Timestamps per year ===")
+    print(stats.timestamps_per_year.to_string())
 
     print("\n=== Rows per station (describe) ===")
     print(stats.rows_per_station_desc.to_string())
