@@ -177,6 +177,8 @@ def build_station_timeseries(
         latest_attrs.index.names = ["port_id", "snapshot_ts"]
 
         for ts in ts_index:
+            if ts.year == 2021:  # skip 2021 data due to mostly missing records
+                continue
             status_row = status_ffill.loc[ts]
             available_ports = (status_row == "AVAILABLE").sum()
             total_ports = total_ports_const
