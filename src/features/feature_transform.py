@@ -38,6 +38,10 @@ def representative_static_value(series: pd.Series) -> object:
     return non_null.iloc[0]
 
 
+def format_month_year(ts: pd.Timestamp) -> str:
+    return ts.strftime("%Y-%m")
+
+
 def parse_and_bucket_snapshots(df: pd.DataFrame) -> pd.DataFrame:
     parsed_ts = pd.to_datetime(df["snapshot_ts"], errors="coerce", utc=True)
     invalid_count = int(parsed_ts.isna().sum())
@@ -112,7 +116,18 @@ def build_station_dense_grid(station_df: pd.DataFrame) -> pd.DataFrame:
 
 def build_dense_dataset(bucketed_df: pd.DataFrame) -> pd.DataFrame:
     station_frames: list[pd.DataFrame] = []
-    for _, station_df in bucketed_df.groupby("st_id", sort=False):
+    grouped = bucketed_df.groupby("st_id", sort=False)
+    total_stations = grouped.ngroups
+
+    for idx, (_, station_df) in enumerate(grouped, start=1):
+        station_id = station_df["st_id"].iloc[0]
+        station_min_ts = station_df["ts"].min()
+        station_max_ts = station_df["ts"].max()
+        print(
+            "FEATURE_TRANSFORM: "
+            f"station {station_id} ({idx}/{total_stations}) "
+            f"{format_month_year(station_min_ts)} -> {format_month_year(station_max_ts)}"
+        )
         station_frames.append(build_station_dense_grid(station_df))
 
     if not station_frames:
