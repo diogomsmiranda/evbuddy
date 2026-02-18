@@ -69,10 +69,16 @@ stages:
       - src/utils/utils.py
       - data/interim/features/stations_timeseries_encoded.csv
       - data/interim/features/stations_timeseries_selected.csv
-    outs:
-      - reports/figures/sparsity
-      - reports/figures/distributions/interim/stations_timeseries_selected
-      - reports/figures/dimensionality/interim/timeseries
+    plots:
+      - reports/figures/sparsity/records_per_day.png
+      - reports/figures/sparsity/records_per_day_full.png
+      - reports/figures/dimensionality/interim/timeseries/stations_timeseries_encoded_records_variables.png
+      - reports/figures/dimensionality/interim/timeseries/stations_timeseries_encoded_missing_values.png
+      - reports/figures/distributions/interim/stations_timeseries_selected/unavailable_rate.png
+      - reports/figures/distributions/interim/stations_timeseries_selected/available_ports.png
+      - reports/figures/distributions/interim/stations_timeseries_selected/snapshot_ts.png
+      - reports/figures/distributions/interim/stations_timeseries_selected/total_ports.png
+      - reports/figures/distributions/interim/stations_timeseries_selected/has_dc_fast.png
 
   feature_transform:
     cmd: poetry run python -m src.features.feature_transform

@@ -210,18 +210,46 @@ stages:
       md5: 8879d4843ca4b10269f81e384f6c2aa1
       size: 2740
     outs:
-    - path: reports/figures/dimensionality/interim/timeseries
+    - path: 
+        reports/figures/dimensionality/interim/timeseries/stations_timeseries_encoded_missing_values.png
       hash: md5
-      md5: f1f77bff092988558f67263af27a85b0.dir
-      size: 283082
-      nfiles: 2
-    - path: reports/figures/distributions/interim/stations_timeseries_selected
+      md5: 44f46650be518c5ef24ff6ce06699d84
+      size: 268291
+    - path: 
+        reports/figures/dimensionality/interim/timeseries/stations_timeseries_encoded_records_variables.png
       hash: md5
-      md5: cd1611048adfb1d665b8361bb290473c.dir
-      size: 1301174
-      nfiles: 22
-    - path: reports/figures/sparsity
+      md5: 2145bfddaafb808477697bd6266d6a76
+      size: 14791
+    - path: 
+        reports/figures/distributions/interim/stations_timeseries_selected/available_ports.png
       hash: md5
-      md5: 0967db70ba686990093692d1f59e6e84.dir
-      size: 49146
-      nfiles: 2
+      md5: 6e1495e158f2cd38cbae376efb35024a
+      size: 44220
+    - path: 
+        reports/figures/distributions/interim/stations_timeseries_selected/has_dc_fast.png
+      hash: md5
+      md5: 25305e315b0f15456479e00ba720e967
+      size: 25007
+    - path: 
+        reports/figures/distributions/interim/stations_timeseries_selected/snapshot_ts.png
+      hash: md5
+      md5: f499776246c5ce6d2d9157560d1ec62e
+      size: 48572
+    - path: 
+        reports/figures/distributions/interim/stations_timeseries_selected/total_ports.png
+      hash: md5
+      md5: 800df007ca4b52f44d5696ec57f16b56
+      size: 36338
+    - path: 
+        reports/figures/distributions/interim/stations_timeseries_selected/unavailable_rate.png
+      hash: md5
+      md5: 4d0f5758f7bc96db2d3f749939637663
+      size: 66556
+    - path: reports/figures/sparsity/records_per_day.png
+      hash: md5
+      md5: 0b8c388f2a9b2b2231a459ffab961f4e
+      size: 20872
+    - path: reports/figures/sparsity/records_per_day_full.png
+      hash: md5
+      md5: 54dd7f688c67b270f34bcb2b3044875e
+      size: 28274
