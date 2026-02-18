@@ -177,3 +177,51 @@ stages:
       md5: 450eb834670af9c70d463a1d5bc228e3.dir
       size: 822229
       nfiles: 6
+  visualisation:
+    cmd: "poetry run python -m src.visualisation.sparsity\npoetry run python -m src.visualisation.distributions
+      timeseries\npoetry run python -m src.visualisation.dimensionality timeseries\n"
+    deps:
+    - path: data/interim/features/stations_timeseries_encoded.csv
+      hash: md5
+      md5: d951bea88fc57b82e3e2c3194782fc6b
+      size: 1155029
+    - path: data/interim/features/stations_timeseries_selected.csv
+      hash: md5
+      md5: 40cce72210647fae2a14ad98425b0713
+      size: 754419
+    - path: src/utils/__init__.py
+      hash: md5
+      md5: 42927d2425409cc1890770464e867e9d
+      size: 580
+    - path: src/utils/utils.py
+      hash: md5
+      md5: efba7271fa0ac9c56ada701534619156
+      size: 1755
+    - path: src/visualisation/dimensionality.py
+      hash: md5
+      md5: 733c7a0df78ea061abe3477a07d1a7bb
+      size: 3855
+    - path: src/visualisation/distributions.py
+      hash: md5
+      md5: b5304f4ad05d3cae00cb231f2fa92e0e
+      size: 2953
+    - path: src/visualisation/sparsity.py
+      hash: md5
+      md5: 8879d4843ca4b10269f81e384f6c2aa1
+      size: 2740
+    outs:
+    - path: reports/figures/dimensionality/interim/timeseries
+      hash: md5
+      md5: f1f77bff092988558f67263af27a85b0.dir
+      size: 283082
+      nfiles: 2
+    - path: reports/figures/distributions/interim/stations_timeseries_selected
+      hash: md5
+      md5: cd1611048adfb1d665b8361bb290473c.dir
+      size: 1301174
+      nfiles: 22
+    - path: reports/figures/sparsity
+      hash: md5
+      md5: 0967db70ba686990093692d1f59e6e84.dir
+      size: 49146
+      nfiles: 2

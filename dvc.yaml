@@ -56,6 +56,24 @@ stages:
     outs:
       - data/interim/features/stations_timeseries_selected.csv
 
+  visualisation:
+    cmd: |
+      poetry run python -m src.visualisation.sparsity
+      poetry run python -m src.visualisation.distributions timeseries
+      poetry run python -m src.visualisation.dimensionality timeseries
+    deps:
+      - src/visualisation/sparsity.py
+      - src/visualisation/distributions.py
+      - src/visualisation/dimensionality.py
+      - src/utils/__init__.py
+      - src/utils/utils.py
+      - data/interim/features/stations_timeseries_encoded.csv
+      - data/interim/features/stations_timeseries_selected.csv
+    outs:
+      - reports/figures/sparsity
+      - reports/figures/distributions/interim/stations_timeseries_selected
+      - reports/figures/dimensionality/interim/timeseries
+
   feature_transform:
     cmd: poetry run python -m src.features.feature_transform
     deps:
