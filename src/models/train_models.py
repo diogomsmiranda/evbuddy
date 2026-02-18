@@ -46,9 +46,7 @@ FEATURE_COLUMNS = [
 ]
 
 MODELS_DIR = (
-    MODELS_DIR / "with_scale_pos_weight"
-    if USE_SCALE_POS_WEIGHT
-    else MODELS_DIR / "no_scale_pos_weight"
+    MODELS_DIR / "with_scale_pos_weight" if USE_SCALE_POS_WEIGHT else MODELS_DIR
 )
 
 
