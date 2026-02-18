@@ -1,0 +1,75 @@
+stages:
+  concat_locations:
+    cmd: poetry run python -m src.data.concat_csv
+    deps:
+      - src/data/concat_csv.py
+      - src/utils/utils.py
+      - data/raw/opendata_datasets_csv
+      - data/interim/oh_opendata_datasets_csv
+    outs:
+      - data/interim/locations.csv
+
+  extract_stations:
+    cmd: poetry run python -m src.data.extract_nested stations
+    deps:
+      - src/data/extract_nested.py
+      - src/utils/utils.py
+      - data/interim/locations.csv
+    outs:
+      - data/interim/stations.csv
+
+  extract_ports:
+    cmd: poetry run python -m src.data.extract_nested ports
+    deps:
+      - src/data/extract_nested.py
+      - src/utils/utils.py
+      - data/interim/stations.csv
+    outs:
+      - data/interim/ports.csv
+
+  build_timeseries:
+    cmd: poetry run python -m src.data.build_features
+    deps:
+      - src/data/build_features.py
+      - src/utils/utils.py
+      - data/interim/locations.csv
+      - data/interim/stations.csv
+      - data/interim/ports.csv
+    outs:
+      - data/interim/features/stations_timeseries.csv
+
+  feature_encoding:
+    cmd: poetry run python -m src.features.feature_encoding
+    deps:
+      - src/features/feature_encoding.py
+      - src/utils/utils.py
+      - data/interim/features/stations_timeseries.csv
+    outs:
+      - data/interim/features/stations_timeseries_encoded.csv
+
+  feature_selection:
+    cmd: poetry run python -m src.features.feature_selection
+    deps:
+      - src/features/feature_selection.py
+      - src/utils/utils.py
+      - data/interim/features/stations_timeseries_encoded.csv
+    outs:
+      - data/interim/features/stations_timeseries_selected.csv
+
+  feature_transform:
+    cmd: poetry run python -m src.features.feature_transform
+    deps:
+      - src/features/feature_transform.py
+      - src/utils/utils.py
+      - data/interim/features/stations_timeseries_selected.csv
+    outs:
+      - data/processed
+
+  train_models:
+    cmd: poetry run python -m src.models.train_models
+    deps:
+      - src/models/train_models.py
+      - src/utils/utils.py
+      - data/processed
+    outs:
+      - models
