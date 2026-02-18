@@ -27,5 +27,6 @@ build-backend = "poetry.core.masonry.api"
 
 [dependency-groups]
 dev = [
-    "dvc (>=3.66.1,<4.0.0)"
+    "dvc (>=3.66.1,<4.0.0)",
+    "dvc-ssh (>=4.2.2,<5.0.0)"
 ]
