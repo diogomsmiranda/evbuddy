@@ -19,6 +19,7 @@ on:
 
 env:
   PYTHON_BIN: /home/igo/.pyenv/shims/python3.12
+  DVC_REMOTE_URL: /srv/dvc/evbuddy
 
 jobs:
   dvc-full-repro-main:
@@ -44,6 +45,10 @@ jobs:
         run: |
           "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
           "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
+
+      - name: Configure DVC remote for local runner storage
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
@@ -82,6 +87,10 @@ jobs:
           "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
           "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
 
+      - name: Configure DVC remote for local runner storage
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+
       - name: Pull DVC data
         run: |
           "$PYTHON_BIN" -m poetry run dvc pull
@@ -115,6 +124,10 @@ jobs:
         run: |
           "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
           "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
+
+      - name: Configure DVC remote for local runner storage
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
