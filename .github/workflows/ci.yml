@@ -6,6 +6,9 @@ on:
     branches:
       - main
 
+env:
+  PYTHON_BIN: /home/igo/.pyenv/shims/python3.12
+
 jobs:
   unit-tests:
     runs-on:
@@ -15,16 +18,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
+      - name: Verify Python runtime
+        run: |
+          "$PYTHON_BIN" --version
 
       - name: Install Poetry
-        run: python -m pip install --upgrade pip poetry
+        run: |
+          "$PYTHON_BIN" -m pip install --upgrade pip poetry
 
       - name: Install dependencies
-        run: poetry install --with dev --no-interaction --no-root
+        run: |
+          poetry env use "$PYTHON_BIN"
+          poetry install --with dev --no-interaction --no-root
 
       - name: Syntax check
         run: poetry run python -m compileall src tests
