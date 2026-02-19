@@ -1,0 +1,111 @@
+name: dvc
+
+on:
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      run_train_models:
+        description: "Run full train_models stage after visualisation"
+        required: false
+        default: false
+        type: boolean
+  pull_request:
+    types:
+      - labeled
+      - synchronize
+      - reopened
+
+jobs:
+  dvc-full-repro-main:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on:
+      - self-hosted
+      - linux
+    timeout-minutes: 240
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction --no-root
+
+      - name: Pull DVC data
+        run: poetry run dvc pull
+
+      - name: Reproduce full DVC pipeline
+        run: poetry run dvc repro
+
+      - name: Quality gate on model metrics
+        env:
+          REQUIRE_METRICS_FILES: "1"
+        run: poetry run pytest -v tests/quality/test_metrics_thresholds.py
+
+  dvc-visualisation:
+    if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'full-train')
+    runs-on:
+      - self-hosted
+      - linux
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction --no-root
+
+      - name: Pull DVC data
+        run: poetry run dvc pull
+
+      - name: Reproduce visualisation stage
+        run: poetry run dvc repro visualisation
+
+  dvc-train-models:
+    needs:
+      - dvc-visualisation
+    if: (github.event_name == 'workflow_dispatch' && github.event.inputs.run_train_models == 'true') || contains(github.event.pull_request.labels.*.name, 'full-train')
+    runs-on:
+      - self-hosted
+      - linux
+    timeout-minutes: 180
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install Poetry
+        run: python -m pip install --upgrade pip poetry
+
+      - name: Install dependencies
+        run: poetry install --with dev --no-interaction --no-root
+
+      - name: Pull DVC data
+        run: poetry run dvc pull
+
+      - name: Reproduce train_models stage
+        run: poetry run dvc repro train_models
+
+      - name: Quality gate on model metrics
+        env:
+          REQUIRE_METRICS_FILES: "1"
+        run: poetry run pytest -v tests/quality/test_metrics_thresholds.py
