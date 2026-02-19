@@ -204,8 +204,8 @@ def train_single_horizon(
     metrics: dict[str, object] = {
         "requested_horizon_minutes": int(requested_horizon_minutes),
         "effective_horizon_minutes": int(effective_horizon_minutes),
-        "rows_train": int(len(train_df)),
-        "rows_valid": int(len(valid_df)),
+        "rows_train": len(train_df),
+        "rows_valid": len(valid_df),
         "positive_rate_train": float(y_train.mean()),
         "positive_rate_valid": float(y_valid.mean()),
         "n_stations_train": int(train_df["st_id"].nunique()),
