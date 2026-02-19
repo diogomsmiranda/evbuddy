@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 import math
+import os
 import random
 
 import numpy as np
@@ -38,6 +39,7 @@ GRID_MINUTES = 10
 STALE_CAP_MINUTES = 30
 USE_SCALE_POS_WEIGHT = False
 CLASSIFICATION_THRESHOLD = 0.5
+DEFAULT_N_JOBS = -1
 
 FEATURE_COLUMNS = [
     *MODEL_STATIC_FEATURE_COLUMNS,
@@ -48,6 +50,24 @@ FEATURE_COLUMNS = [
 MODELS_DIR = (
     MODELS_DIR / "with_scale_pos_weight" if USE_SCALE_POS_WEIGHT else MODELS_DIR
 )
+
+
+def resolve_n_jobs() -> int:
+    raw = os.getenv("EV_BUDDY_N_JOBS", str(DEFAULT_N_JOBS)).strip()
+    try:
+        value = int(raw)
+    except ValueError as exc:
+        raise ValueError(
+            f"Invalid EV_BUDDY_N_JOBS={raw!r}. Use -1 or a positive integer."
+        ) from exc
+
+    if value == -1 or value > 0:
+        return value
+
+    raise ValueError(f"Invalid EV_BUDDY_N_JOBS={value}. Use -1 or a positive integer.")
+
+
+N_JOBS = resolve_n_jobs()
 
 
 def load_dense_dataset() -> pd.DataFrame:
@@ -187,7 +207,7 @@ def train_single_horizon(
         colsample_bytree=0.8,
         reg_lambda=1.0,
         random_state=RANDOM_SEED,
-        n_jobs=-1,
+        n_jobs=N_JOBS,
         tree_method="hist",
         scale_pos_weight=scale_pos_weight,
         early_stopping_rounds=30,
@@ -217,6 +237,7 @@ def train_single_horizon(
         "logloss": float(log_loss(y_valid, valid_prob, labels=[0, 1])),
         "brier": float(brier_score_loss(y_valid, valid_prob)),
         "classification_threshold": float(CLASSIFICATION_THRESHOLD),
+        "n_jobs": int(N_JOBS),
         "accuracy": float(accuracy_score(y_valid, valid_pred)),
         "balanced_accuracy": float(balanced_accuracy_score(y_valid, valid_pred)),
         "precision": float(precision_score(y_valid, valid_pred, zero_division=0)),
@@ -236,6 +257,7 @@ def main() -> None:
 
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
+    print(f"TRAIN_MODELS: Using EV_BUDDY_N_JOBS={N_JOBS}")
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
 

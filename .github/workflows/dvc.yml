@@ -60,6 +60,8 @@ jobs:
           poetry run dvc pull
 
       - name: Reproduce full DVC pipeline
+        env:
+          EV_BUDDY_N_JOBS: "2"
         run: |
           poetry run dvc repro
 
@@ -147,6 +149,8 @@ jobs:
           poetry run dvc pull
 
       - name: Reproduce train_models stage
+        env:
+          EV_BUDDY_N_JOBS: "2"
         run: |
           poetry run dvc repro train_models
 
