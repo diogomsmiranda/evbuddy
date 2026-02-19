@@ -42,19 +42,22 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry env use "$PYTHON_BIN"
-          poetry install --with dev --no-interaction --no-root
+          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
+          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
 
       - name: Pull DVC data
-        run: poetry run dvc pull
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc pull
 
       - name: Reproduce full DVC pipeline
-        run: poetry run dvc repro
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc repro
 
       - name: Quality gate on model metrics
         env:
           REQUIRE_METRICS_FILES: "1"
-        run: poetry run pytest -v tests/quality/test_metrics_thresholds.py
+        run: |
+          "$PYTHON_BIN" -m poetry run pytest -v tests/quality/test_metrics_thresholds.py
 
   dvc-visualisation:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'full-train')
@@ -76,14 +79,16 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry env use "$PYTHON_BIN"
-          poetry install --with dev --no-interaction --no-root
+          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
+          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
 
       - name: Pull DVC data
-        run: poetry run dvc pull
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc pull
 
       - name: Reproduce visualisation stage
-        run: poetry run dvc repro visualisation
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc repro visualisation
 
   dvc-train-models:
     needs:
@@ -108,16 +113,19 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry env use "$PYTHON_BIN"
-          poetry install --with dev --no-interaction --no-root
+          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
+          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
 
       - name: Pull DVC data
-        run: poetry run dvc pull
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc pull
 
       - name: Reproduce train_models stage
-        run: poetry run dvc repro train_models
+        run: |
+          "$PYTHON_BIN" -m poetry run dvc repro train_models
 
       - name: Quality gate on model metrics
         env:
           REQUIRE_METRICS_FILES: "1"
-        run: poetry run pytest -v tests/quality/test_metrics_thresholds.py
+        run: |
+          "$PYTHON_BIN" -m poetry run pytest -v tests/quality/test_metrics_thresholds.py
