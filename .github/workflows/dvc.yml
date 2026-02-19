@@ -40,29 +40,34 @@ jobs:
       - name: Install Poetry
         run: |
           "$PYTHON_BIN" -m pip install --upgrade pip poetry
+          echo "$("$PYTHON_BIN" -m site --user-base)/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Poetry
+        run: |
+          poetry --version
 
       - name: Install dependencies
         run: |
-          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
-          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
+          poetry env use "$PYTHON_BIN"
+          poetry install --with dev --no-interaction --no-root
 
       - name: Configure DVC remote for local runner storage
         run: |
-          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
-          "$PYTHON_BIN" -m poetry run dvc pull
+          poetry run dvc pull
 
       - name: Reproduce full DVC pipeline
         run: |
-          "$PYTHON_BIN" -m poetry run dvc repro
+          poetry run dvc repro
 
       - name: Quality gate on model metrics
         env:
           REQUIRE_METRICS_FILES: "1"
         run: |
-          "$PYTHON_BIN" -m poetry run pytest -v tests/quality/test_metrics_thresholds.py
+          poetry run pytest -v tests/quality/test_metrics_thresholds.py
 
   dvc-visualisation:
     if: github.event_name == 'workflow_dispatch' || contains(github.event.pull_request.labels.*.name, 'full-train')
@@ -81,23 +86,28 @@ jobs:
       - name: Install Poetry
         run: |
           "$PYTHON_BIN" -m pip install --upgrade pip poetry
+          echo "$("$PYTHON_BIN" -m site --user-base)/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Poetry
+        run: |
+          poetry --version
 
       - name: Install dependencies
         run: |
-          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
-          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
+          poetry env use "$PYTHON_BIN"
+          poetry install --with dev --no-interaction --no-root
 
       - name: Configure DVC remote for local runner storage
         run: |
-          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
-          "$PYTHON_BIN" -m poetry run dvc pull
+          poetry run dvc pull
 
       - name: Reproduce visualisation stage
         run: |
-          "$PYTHON_BIN" -m poetry run dvc repro visualisation
+          poetry run dvc repro visualisation
 
   dvc-train-models:
     needs:
@@ -119,26 +129,31 @@ jobs:
       - name: Install Poetry
         run: |
           "$PYTHON_BIN" -m pip install --upgrade pip poetry
+          echo "$("$PYTHON_BIN" -m site --user-base)/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Poetry
+        run: |
+          poetry --version
 
       - name: Install dependencies
         run: |
-          "$PYTHON_BIN" -m poetry env use "$PYTHON_BIN"
-          "$PYTHON_BIN" -m poetry install --with dev --no-interaction --no-root
+          poetry env use "$PYTHON_BIN"
+          poetry install --with dev --no-interaction --no-root
 
       - name: Configure DVC remote for local runner storage
         run: |
-          "$PYTHON_BIN" -m poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
-          "$PYTHON_BIN" -m poetry run dvc pull
+          poetry run dvc pull
 
       - name: Reproduce train_models stage
         run: |
-          "$PYTHON_BIN" -m poetry run dvc repro train_models
+          poetry run dvc repro train_models
 
       - name: Quality gate on model metrics
         env:
           REQUIRE_METRICS_FILES: "1"
         run: |
-          "$PYTHON_BIN" -m poetry run pytest -v tests/quality/test_metrics_thresholds.py
+          poetry run pytest -v tests/quality/test_metrics_thresholds.py
