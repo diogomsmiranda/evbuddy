@@ -127,9 +127,7 @@ jobs:
           "$PYTHON_BIN" -c "import sys; assert sys.version_info[:2] == (3, 12), f'Need Python 3.12.x, got {sys.version}'"
 
       - name: Install Poetry
-        run: |
-          "$PYTHON_BIN" -m pip install --upgrade pip poetry
-          echo "$("$PYTHON_BIN" -m site --user-base)/bin" >> "$GITHUB_PATH"
+        uses: snok/install-poetry@v1
 
       - name: Verify Poetry
         run: |
