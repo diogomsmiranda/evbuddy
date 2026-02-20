@@ -165,8 +165,8 @@ stages:
       nfiles: 1
     - path: src/models/train_models.py
       hash: md5
-      md5: 1e4807e7318786dab454b567ff1d2842
-      size: 8769
+      md5: 7b2252906e5085d2b4e884da5d5f6318
+      size: 11757
     - path: src/utils/utils.py
       hash: md5
       md5: efba7271fa0ac9c56ada701534619156
@@ -174,8 +174,8 @@ stages:
     outs:
     - path: models
       hash: md5
-      md5: 450eb834670af9c70d463a1d5bc228e3.dir
-      size: 822229
+      md5: 6a3ace0da3373c5c74ab67d0fad84c0d.dir
+      size: 821632
       nfiles: 6
   visualisation:
     cmd: "poetry run python -m src.visualisation.sparsity\npoetry run python -m src.visualisation.distributions

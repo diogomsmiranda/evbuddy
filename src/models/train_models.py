@@ -1,9 +1,12 @@
 from __future__ import annotations
 
+import gc
 import json
 import math
 import os
 import random
+import tempfile
+from typing import Any
 
 import numpy as np
 import pandas as pd
@@ -30,16 +33,16 @@ from src.utils import (
 )
 
 try:
-    from xgboost import XGBClassifier
+    import xgboost as xgb
 except ModuleNotFoundError:
-    XGBClassifier = None
+    xgb = None
 
 RANDOM_SEED = 42
 GRID_MINUTES = 10
 STALE_CAP_MINUTES = 30
 USE_SCALE_POS_WEIGHT = False
 CLASSIFICATION_THRESHOLD = 0.5
-DEFAULT_N_JOBS = -1
+DEFAULT_N_JOBS = 2
 
 FEATURE_COLUMNS = [
     *MODEL_STATIC_FEATURE_COLUMNS,
@@ -70,6 +73,22 @@ def resolve_n_jobs() -> int:
 N_JOBS = resolve_n_jobs()
 
 
+def dataframe_to_float32_memmap(
+    df: pd.DataFrame,
+    columns: list[str],
+    prefix: str,
+) -> tuple[np.memmap, str]:
+    fd, path = tempfile.mkstemp(prefix=f"evbuddy_{prefix}_", suffix=".mmap")
+    os.close(fd)
+
+    matrix = np.memmap(path, dtype=np.float32, mode="w+", shape=(len(df), len(columns)))
+    for idx, col in enumerate(columns):
+        values = df[col].to_numpy(dtype=np.float32, copy=False)
+        matrix[:, idx] = values
+    matrix.flush()
+    return matrix, path
+
+
 def load_dense_dataset() -> pd.DataFrame:
     if PROCESSED_DENSE_10MIN_PARQUET.exists():
         try:
@@ -97,7 +116,7 @@ def load_dense_dataset() -> pd.DataFrame:
         raise ValueError(f"Found {invalid_count} invalid timestamps in ts column.")
 
     df["ts"] = parsed_ts
-    df = df.sort_values(["st_id", "ts"]).reset_index(drop=True)
+    df = df.reset_index(drop=True)
 
     print(f"TRAIN_MODELS: Loaded {input_path} ({len(df):,} rows)")
     return df
@@ -123,18 +142,27 @@ def build_horizon_dataset(
     offset_steps = math.ceil(requested_horizon_minutes / GRID_MINUTES)
     effective_horizon_minutes = offset_steps * GRID_MINUTES
 
-    horizon_df = df.copy()
-    horizon_df["available_ports_at_label"] = horizon_df.groupby("st_id", sort=False)[
+    required_columns = list(
+        dict.fromkeys(
+            ["st_id", "ts", "age_minutes", "available_ports", *FEATURE_COLUMNS]
+        )
+    )
+    available_columns = [col for col in required_columns if col in df.columns]
+    horizon_df = df.loc[:, available_columns]
+    available_ports_at_label = horizon_df.groupby("st_id", sort=False)[
         "available_ports"
     ].shift(-offset_steps)
 
     eligible_mask = (
         horizon_df["age_minutes"].le(STALE_CAP_MINUTES)
         & horizon_df["available_ports"].notna()
-        & horizon_df["available_ports_at_label"].notna()
+        & available_ports_at_label.notna()
     )
-    horizon_df = horizon_df.loc[eligible_mask].copy()
-    horizon_df["target"] = (horizon_df["available_ports_at_label"] == 0).astype(int)
+    eligible_available_ports = available_ports_at_label.loc[eligible_mask]
+    horizon_df = horizon_df.loc[eligible_mask].assign(
+        available_ports_at_label=eligible_available_ports,
+        target=(eligible_available_ports == 0).astype(int),
+    )
 
     return horizon_df, effective_horizon_minutes
 
@@ -152,8 +180,8 @@ def split_train_valid(horizon_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
     train_ts = unique_ts[:split_idx]
     valid_ts = unique_ts[split_idx:]
 
-    train_df = horizon_df[horizon_df["ts"].isin(train_ts)].copy()
-    valid_df = horizon_df[horizon_df["ts"].isin(valid_ts)].copy()
+    train_df = horizon_df[horizon_df["ts"].isin(train_ts)]
+    valid_df = horizon_df[horizon_df["ts"].isin(valid_ts)]
 
     if train_df.empty or valid_df.empty:
         raise ValueError("Train/validation split produced an empty partition.")
@@ -164,7 +192,7 @@ def split_train_valid(horizon_df: pd.DataFrame) -> tuple[pd.DataFrame, pd.DataFr
 def train_single_horizon(
     df: pd.DataFrame,
     requested_horizon_minutes: int,
-) -> tuple[XGBClassifier, dict[str, object]]:
+) -> tuple[Any, dict[str, object]]:
     horizon_df, effective_horizon_minutes = build_horizon_dataset(
         df,
         requested_horizon_minutes=requested_horizon_minutes,
@@ -177,79 +205,116 @@ def train_single_horizon(
 
     train_df, valid_df = split_train_valid(horizon_df)
 
-    X_train = (
-        train_df[FEATURE_COLUMNS].apply(pd.to_numeric, errors="coerce").astype(float)
-    )
-    X_valid = (
-        valid_df[FEATURE_COLUMNS].apply(pd.to_numeric, errors="coerce").astype(float)
-    )
-    y_train = train_df["target"].astype(int)
-    y_valid = valid_df["target"].astype(int)
+    train_memmap_path = None
+    valid_memmap_path = None
+    X_train = None
+    X_valid = None
+    try:
+        X_train, train_memmap_path = dataframe_to_float32_memmap(
+            train_df, FEATURE_COLUMNS, "train"
+        )
+        X_valid, valid_memmap_path = dataframe_to_float32_memmap(
+            valid_df, FEATURE_COLUMNS, "valid"
+        )
+    except Exception:
+        if train_memmap_path and os.path.exists(train_memmap_path):
+            os.remove(train_memmap_path)
+        if valid_memmap_path and os.path.exists(valid_memmap_path):
+            os.remove(valid_memmap_path)
+        raise
 
-    positive_train = int(y_train.sum())
-    negative_train = int((y_train == 0).sum())
-    if positive_train == 0 or negative_train == 0:
-        raise ValueError(
-            "Training data has only one class for horizon "
-            f"{requested_horizon_minutes}m (pos={positive_train}, neg={negative_train})."
+    y_train = train_df["target"].to_numpy(dtype=np.int8, copy=False)
+    y_valid = valid_df["target"].to_numpy(dtype=np.int8, copy=False)
+
+    try:
+        positive_train = int(y_train.sum())
+        negative_train = int((y_train == 0).sum())
+        if positive_train == 0 or negative_train == 0:
+            raise ValueError(
+                "Training data has only one class for horizon "
+                f"{requested_horizon_minutes}m (pos={positive_train}, neg={negative_train})."
+            )
+
+        scale_pos_weight = (
+            negative_train / positive_train if USE_SCALE_POS_WEIGHT else 1.0
         )
 
-    scale_pos_weight = negative_train / positive_train if USE_SCALE_POS_WEIGHT else 1.0
+        dtrain = xgb.DMatrix(X_train, label=y_train, feature_names=FEATURE_COLUMNS)
+        dvalid = xgb.DMatrix(X_valid, label=y_valid, feature_names=FEATURE_COLUMNS)
+        params = {
+            "objective": "binary:logistic",
+            "eval_metric": "logloss",
+            "eta": 0.05,
+            "max_depth": 6,
+            "min_child_weight": 1,
+            "subsample": 0.8,
+            "colsample_bytree": 0.8,
+            "lambda": 1.0,
+            "seed": RANDOM_SEED,
+            "nthread": N_JOBS,
+            "tree_method": "hist",
+            "scale_pos_weight": scale_pos_weight,
+        }
+        model = xgb.train(
+            params=params,
+            dtrain=dtrain,
+            num_boost_round=800,
+            evals=[(dvalid, "valid")],
+            early_stopping_rounds=30,
+            verbose_eval=False,
+        )
 
-    model = XGBClassifier(
-        objective="binary:logistic",
-        eval_metric="logloss",
-        n_estimators=800,
-        learning_rate=0.05,
-        max_depth=6,
-        min_child_weight=1,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        reg_lambda=1.0,
-        random_state=RANDOM_SEED,
-        n_jobs=N_JOBS,
-        tree_method="hist",
-        scale_pos_weight=scale_pos_weight,
-        early_stopping_rounds=30,
-    )
-    model.fit(X_train, y_train, eval_set=[(X_valid, y_valid)], verbose=False)
+        best_iteration = getattr(model, "best_iteration", None)
+        if best_iteration is not None and best_iteration >= 0:
+            valid_prob = model.predict(dvalid, iteration_range=(0, best_iteration + 1))
+        else:
+            valid_prob = model.predict(dvalid)
+        valid_pred = (valid_prob >= CLASSIFICATION_THRESHOLD).astype(int)
 
-    valid_prob = model.predict_proba(X_valid)[:, 1]
-    valid_pred = (valid_prob >= CLASSIFICATION_THRESHOLD).astype(int)
+        auc = None
+        if np.unique(y_valid).size > 1:
+            auc = float(roc_auc_score(y_valid, valid_prob))
 
-    auc = None
-    if y_valid.nunique() > 1:
-        auc = float(roc_auc_score(y_valid, valid_prob))
-
-    metrics: dict[str, object] = {
-        "requested_horizon_minutes": int(requested_horizon_minutes),
-        "effective_horizon_minutes": int(effective_horizon_minutes),
-        "rows_train": len(train_df),
-        "rows_valid": len(valid_df),
-        "positive_rate_train": float(y_train.mean()),
-        "positive_rate_valid": float(y_valid.mean()),
-        "n_stations_train": int(train_df["st_id"].nunique()),
-        "n_stations_valid": int(valid_df["st_id"].nunique()),
-        "use_scale_pos_weight": USE_SCALE_POS_WEIGHT,
-        "scale_pos_weight_value": float(scale_pos_weight),
-        "feature_list": FEATURE_COLUMNS,
-        "auc": auc,
-        "logloss": float(log_loss(y_valid, valid_prob, labels=[0, 1])),
-        "brier": float(brier_score_loss(y_valid, valid_prob)),
-        "classification_threshold": float(CLASSIFICATION_THRESHOLD),
-        "n_jobs": int(N_JOBS),
-        "accuracy": float(accuracy_score(y_valid, valid_pred)),
-        "balanced_accuracy": float(balanced_accuracy_score(y_valid, valid_pred)),
-        "precision": float(precision_score(y_valid, valid_pred, zero_division=0)),
-        "recall": float(recall_score(y_valid, valid_pred, zero_division=0)),
-        "f1": float(f1_score(y_valid, valid_pred, zero_division=0)),
-    }
-
-    return model, metrics
+        metrics: dict[str, object] = {
+            "requested_horizon_minutes": int(requested_horizon_minutes),
+            "effective_horizon_minutes": int(effective_horizon_minutes),
+            "rows_train": len(train_df),
+            "rows_valid": len(valid_df),
+            "positive_rate_train": float(np.mean(y_train)),
+            "positive_rate_valid": float(np.mean(y_valid)),
+            "n_stations_train": int(train_df["st_id"].nunique()),
+            "n_stations_valid": int(valid_df["st_id"].nunique()),
+            "use_scale_pos_weight": USE_SCALE_POS_WEIGHT,
+            "scale_pos_weight_value": float(scale_pos_weight),
+            "feature_list": FEATURE_COLUMNS,
+            "auc": auc,
+            "logloss": float(log_loss(y_valid, valid_prob, labels=[0, 1])),
+            "brier": float(brier_score_loss(y_valid, valid_prob)),
+            "classification_threshold": float(CLASSIFICATION_THRESHOLD),
+            "best_iteration": (
+                int(best_iteration)
+                if best_iteration is not None and best_iteration >= 0
+                else None
+            ),
+            "n_jobs": int(N_JOBS),
+            "accuracy": float(accuracy_score(y_valid, valid_pred)),
+            "balanced_accuracy": float(balanced_accuracy_score(y_valid, valid_pred)),
+            "precision": float(precision_score(y_valid, valid_pred, zero_division=0)),
+            "recall": float(recall_score(y_valid, valid_pred, zero_division=0)),
+            "f1": float(f1_score(y_valid, valid_pred, zero_division=0)),
+        }
+        return model, metrics
+    finally:
+        del X_train, X_valid
+        gc.collect()
+        if train_memmap_path and os.path.exists(train_memmap_path):
+            os.remove(train_memmap_path)
+        if valid_memmap_path and os.path.exists(valid_memmap_path):
+            os.remove(valid_memmap_path)
 
 
 def main() -> None:
-    if XGBClassifier is None:
+    if xgb is None:
         raise ModuleNotFoundError(
             "xgboost is not installed in this environment. "
             "Install dependencies with `poetry install` and retry."
