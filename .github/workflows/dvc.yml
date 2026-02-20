@@ -63,7 +63,7 @@ jobs:
         env:
           EV_BUDDY_N_JOBS: "2"
         run: |
-          poetry run dvc repro
+          poetry run dvc repro -f
 
       - name: Quality gate on model metrics
         env:
