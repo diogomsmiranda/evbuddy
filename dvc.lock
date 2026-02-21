@@ -165,18 +165,37 @@ stages:
       nfiles: 1
     - path: src/models/train_models.py
       hash: md5
-      md5: 7b2252906e5085d2b4e884da5d5f6318
-      size: 11757
+      md5: 32f12123d1bda3d5613beb968860fc7f
+      size: 11191
     - path: src/utils/utils.py
       hash: md5
       md5: efba7271fa0ac9c56ada701534619156
       size: 1755
     outs:
-    - path: models
+    - path: models/metrics_h10m.json
       hash: md5
-      md5: 6a3ace0da3373c5c74ab67d0fad84c0d.dir
-      size: 821632
-      nfiles: 6
+      md5: 26e1cf78aaec58d271d983d9650217a5
+      size: 1219
+    - path: models/metrics_h20m.json
+      hash: md5
+      md5: dbd51b7fc54b160f565c093a27682d6d
+      size: 1231
+    - path: models/metrics_h30m.json
+      hash: md5
+      md5: 213775d8833b176cbc2827c2eb174328
+      size: 1225
+    - path: models/xgb_occupied_h10m.json
+      hash: md5
+      md5: 5d5159ac3eb553b0c943849a44baef77
+      size: 524847
+    - path: models/xgb_occupied_h20m.json
+      hash: md5
+      md5: 3a2251d817e085dbf27c05ed58e0dc0b
+      size: 479150
+    - path: models/xgb_occupied_h30m.json
+      hash: md5
+      md5: a97540be9536220e58e4dd6e67783c96
+      size: 486561
   visualisation:
     cmd: "poetry run python -m src.visualisation.sparsity\npoetry run python -m src.visualisation.distributions
       timeseries\npoetry run python -m src.visualisation.dimensionality timeseries\n"
@@ -253,3 +272,44 @@ stages:
       hash: md5
       md5: 54dd7f688c67b270f34bcb2b3044875e
       size: 28274
+  train_models_pandas:
+    cmd: poetry run python -m src.models.train_models_pandas
+    deps:
+    - path: data/processed
+      hash: md5
+      md5: a23b61d096c68e70da07f499b079e154.dir
+      size: 744474144
+      nfiles: 1
+    - path: src/models/train_models_pandas.py
+      hash: md5
+      md5: aa790c52458e734c94473ff7dedac406
+      size: 11773
+    - path: src/utils/utils.py
+      hash: md5
+      md5: efba7271fa0ac9c56ada701534619156
+      size: 1755
+    outs:
+    - path: models/pandas/metrics_h10m.json
+      hash: md5
+      md5: 1e351959bfa5857068e6caa739cc168c
+      size: 1167
+    - path: models/pandas/metrics_h20m.json
+      hash: md5
+      md5: b5c6ce36ab6b75f05017eb349d83a031
+      size: 1164
+    - path: models/pandas/metrics_h30m.json
+      hash: md5
+      md5: 7d2d44965912fa2d0d55715b99db74cf
+      size: 1162
+    - path: models/pandas/xgb_occupied_h10m.json
+      hash: md5
+      md5: a457f843e8660cc4acfc3e7d764da6e0
+      size: 278397
+    - path: models/pandas/xgb_occupied_h20m.json
+      hash: md5
+      md5: 18c3abf80cabb48ac3f400d8f54cf709
+      size: 268732
+    - path: models/pandas/xgb_occupied_h30m.json
+      hash: md5
+      md5: e7bfa29a4c802e359a972f189f70c274
+      size: 271010
