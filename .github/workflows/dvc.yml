@@ -101,7 +101,7 @@ jobs:
 
       - name: Configure DVC remote for local runner storage
         run: |
-          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote add --force --local local "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
@@ -154,7 +154,7 @@ jobs:
 
       - name: Configure DVC remote for local runner storage
         run: |
-          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote add --force --local local "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
@@ -198,7 +198,7 @@ jobs:
 
       - name: Configure DVC remote for local runner storage
         run: |
-          poetry run dvc remote modify --local local url "$DVC_REMOTE_URL"
+          poetry run dvc remote add --force --local local "$DVC_REMOTE_URL"
 
       - name: Pull DVC data
         run: |
