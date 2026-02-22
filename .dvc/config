@@ -1,4 +1,2 @@
 [core]
     remote = local
-['remote "local"']
-    url = ssh://igo@10.10.10.13:/srv/dvc/evbuddy
