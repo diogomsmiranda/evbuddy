@@ -24,6 +24,7 @@ permissions:
 env:
   PYTHON_BIN: /home/igo/.pyenv/shims/python3.12
   DVC_REMOTE_URL: /srv/dvc/evbuddy
+  MLFLOW_TRACKING_URI: http://127.0.0.1:5000
 
 jobs:
   changes:

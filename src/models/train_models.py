@@ -39,6 +39,11 @@ except ModuleNotFoundError:
     xgb_dask = None
     Client = None
 
+try:
+    import mlflow
+except ModuleNotFoundError:
+    mlflow = None
+
 RANDOM_SEED = 42
 GRID_MINUTES = 10
 STALE_CAP_MINUTES = 30
@@ -81,6 +86,80 @@ DASK_THREADS_PER_WORKER = resolve_positive_int_env(
     "EV_BUDDY_DASK_THREADS_PER_WORKER",
     DEFAULT_DASK_THREADS_PER_WORKER,
 )
+
+
+def configure_mlflow() -> bool:
+    tracking_uri = os.getenv("MLFLOW_TRACKING_URI", "").strip()
+    if not tracking_uri:
+        return False
+
+    if mlflow is None:
+        print(
+            "TRAIN_MODELS: MLFLOW_TRACKING_URI is set but mlflow is not installed. "
+            "Skipping MLflow tracking."
+        )
+        return False
+
+    experiment_name = os.getenv("MLFLOW_EXPERIMENT_NAME", "evbuddy-train-models")
+    mlflow.set_tracking_uri(tracking_uri)
+    mlflow.set_experiment(experiment_name)
+    print(
+        f"TRAIN_MODELS: MLflow enabled (uri={tracking_uri}, experiment={experiment_name})"
+    )
+    return True
+
+
+def log_mlflow_run(
+    requested_horizon: int,
+    metrics: dict[str, object],
+    model_path: Any,
+    metrics_path: Any,
+) -> None:
+    if mlflow is None:
+        return
+
+    run_name = f"train_models_h{requested_horizon}m"
+    with mlflow.start_run(run_name=run_name):
+        mlflow.set_tags(
+            {
+                "pipeline": "evbuddy",
+                "stage": "train_models",
+                "trainer": "xgboost_dask",
+            }
+        )
+
+        for key in (
+            "requested_horizon_minutes",
+            "effective_horizon_minutes",
+            "rows_horizon",
+            "rows_train",
+            "rows_valid",
+            "dask_n_workers",
+            "dask_threads_per_worker",
+            "use_scale_pos_weight",
+        ):
+            if key in metrics and metrics[key] is not None:
+                mlflow.log_param(key, metrics[key])
+
+        for key in (
+            "auc",
+            "logloss",
+            "brier",
+            "accuracy",
+            "balanced_accuracy",
+            "precision",
+            "recall",
+            "f1",
+            "positive_rate_train",
+            "positive_rate_valid",
+        ):
+            value = metrics.get(key)
+            if value is not None:
+                mlflow.log_metric(key, float(value))
+
+        artifact_dir = f"h{requested_horizon}m"
+        mlflow.log_artifact(str(model_path), artifact_path=artifact_dir)
+        mlflow.log_artifact(str(metrics_path), artifact_path=artifact_dir)
 
 
 def required_columns() -> list[str]:
@@ -143,9 +222,8 @@ def build_horizon_dataset(ddf: Any, requested_horizon_minutes: int) -> tuple[Any
             & sorted_pdf["available_ports"].notna()
             & sorted_pdf["available_ports_at_label"].notna()
         )
-        eligible_pdf = sorted_pdf.loc[eligible_mask]
-        eligible_pdf["target"] = (eligible_pdf["available_ports_at_label"] == 0).astype(
-            "int8"
+        eligible_pdf = sorted_pdf.loc[eligible_mask].assign(
+            target=lambda df: (df["available_ports_at_label"] == 0).astype("int8")
         )
         return eligible_pdf
 
@@ -305,6 +383,7 @@ def main() -> None:
 
     random.seed(RANDOM_SEED)
     np.random.seed(RANDOM_SEED)
+    mlflow_enabled = configure_mlflow()
 
     MODELS_DIR.mkdir(parents=True, exist_ok=True)
     print(
@@ -331,6 +410,8 @@ def main() -> None:
             booster.save_model(model_path)
             with metrics_path.open("w", encoding="utf-8") as handle:
                 json.dump(metrics, handle, indent=2)
+            if mlflow_enabled:
+                log_mlflow_run(requested_horizon, metrics, model_path, metrics_path)
 
             print(
                 "TRAIN_MODELS: "
