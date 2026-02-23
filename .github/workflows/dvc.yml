@@ -28,6 +28,7 @@ env:
 
 jobs:
   changes:
+    if: github.event_name != 'push'
     runs-on: ubuntu-latest
     outputs:
       visualisation: ${{ github.event_name == 'pull_request' && steps.filter.outputs.visualisation || steps.defaults.outputs.visualisation }}
@@ -70,8 +71,6 @@ jobs:
           echo "train_models=true" >> "$GITHUB_OUTPUT"
 
   dvc-full-repro-main:
-    needs:
-      - changes
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on:
       - self-hosted
