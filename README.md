@@ -1,8 +1,14 @@
-# EVBuddy
+<p align="center">
+  <img src="assets/charging-station_theme_white.png" alt="EVBuddy logo" width="180" />
+</p>
 
-[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](pyproject.toml)
-[![DVC](https://img.shields.io/badge/Data-Versioned_with_DVC-945DD6.svg)](dvc.yaml)
-[![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF.svg)](.github/workflows)
+<h1 align="center">EVBuddy</h1>
+
+<p align="center">
+  <a href="pyproject.toml"><img alt="Python 3.12" src="https://img.shields.io/badge/Python-3.12-blue.svg" /></a>
+  <a href="dvc.yaml"><img alt="DVC" src="https://img.shields.io/badge/Data-Versioned_with_DVC-945DD6.svg" /></a>
+  <a href=".github/workflows"><img alt="CI" src="https://img.shields.io/badge/CI-GitHub_Actions-2088FF.svg" /></a>
+</p>
 
 EVBuddy is a reproducible ML pipeline for forecasting EV charging-station availability.
 It combines data engineering, feature pipelines, distributed model training, experiment tracking, and CI automation.
