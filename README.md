@@ -1,48 +1,19 @@
 # EVBuddy
 
-EVBuddy is a reproducible ML pipeline for EV charging-station availability forecasting.
-It uses:
+[![Python](https://img.shields.io/badge/Python-3.12-blue.svg)](pyproject.toml)
+[![DVC](https://img.shields.io/badge/Data-Versioned_with_DVC-945DD6.svg)](dvc.yaml)
+[![CI](https://img.shields.io/badge/CI-GitHub_Actions-2088FF.svg)](.github/workflows)
 
-- `poetry` for dependency management
-- `dvc` for data/model pipeline orchestration and artifact tracking
-- `pytest` for unit/integration/quality tests
+EVBuddy is a reproducible ML pipeline for forecasting EV charging-station availability.
+It combines data engineering, feature pipelines, distributed model training, experiment tracking, and CI automation.
 
-The main training implementation is Dask + XGBoost (`src/models/train_models.py`) for better memory behavior on larger datasets.
+## Why this project
 
-## Project Structure
+- Build a reproducible end-to-end pipeline from raw EV station snapshots to trained models.
+- Version data and models with DVC so results can be reproduced from Git commits.
+- Train horizon-specific classifiers (10m, 20m, 30m) and track quality over time.
 
-```text
-src/
-  data/            # raw/interim data processing
-  features/        # feature engineering and dense time-grid transform
-  models/          # model training (Dask main, pandas baseline script)
-  visualisation/   # diagnostics and plots
-data/
-  raw/             # DVC-tracked raw source snapshots
-  interim/         # pipeline intermediate datasets
-  processed/       # dense 10-minute modeling dataset
-models/            # trained models + metrics JSON
-reports/figures/   # generated visual diagnostics
-tests/             # unit, integration, quality tests
-dvc.yaml           # pipeline stages
-dvc.lock           # frozen stage hashes
-```
-
-## End-to-End Pipeline
-
-Defined in `dvc.yaml`:
-
-1. `concat_locations`
-2. `extract_stations`
-3. `extract_ports`
-4. `build_timeseries`
-5. `feature_encoding`
-6. `feature_selection`
-7. `visualisation`
-8. `feature_transform`
-9. `train_models` (Dask/XGBoost)
-
-### Pipeline Diagram
+## Pipeline at a Glance
 
 ```mermaid
 flowchart LR
@@ -59,102 +30,100 @@ flowchart LR
   G --> I[feature_transform]
   I --> J[train_models]
   H --> K[reports/figures]
-  J --> L[models/xgb_occupied_hXXm.json]
-  J --> M[models/metrics_hXXm.json]
+  J --> L[models and metrics artifacts]
 ```
 
-### What each stage does
+## Tech Stack and Usage
 
-- `concat_locations`: merges raw location CSV snapshots.
-- `extract_stations` / `extract_ports`: flattens nested location payload into normalized station/port tables.
-- `build_timeseries`: builds station-level temporal records and engineered availability fields.
-- `feature_encoding`: one-hot encodes categorical columns.
-- `feature_selection`: drops zero-variance numeric features (keeps `snapshot_ts`).
-- `visualisation`: produces sparsity/distribution/dimensionality plots.
-- `feature_transform`: converts station observations to a dense 10-minute grid with freshness/time features and stale handling.
-- `train_models`: trains 10/20/30-minute horizon classifiers and writes model + metric artifacts.
+| Technology | Where | Why it is used |
+|---|---|---|
+| `pandas` | feature scripts, preprocessing | Tabular data transformation and feature engineering. |
+| `dask` + `distributed` | `src/models/train_models.py` | Larger-than-memory friendly processing and distributed training data flow. |
+| `xgboost` | model training | Binary classification for station occupancy risk at future horizons. |
+| `scikit-learn` | metrics/evaluation | AUC, logloss-adjacent diagnostics, precision/recall/F1/balanced accuracy. |
+| `dvc` | `dvc.yaml`, `dvc.lock`, artifact store | Reproducible stage orchestration and data/model versioning. |
+| `poetry` | `pyproject.toml` | Dependency and virtual environment management. |
+| `pytest` + `pytest-cov` + `pandera` | `tests/` | Unit tests, coverage checks, and data contract/schema validation. |
+| `mlflow` | training stage logging | Experiment tracking for params, metrics, and model artifacts. |
+| GitHub Actions | `.github/workflows/` | CI checks and DVC pipeline execution on self-hosted runner. |
 
-## Setup
+## DVC Stages
 
-### 1) Install dependencies
+From `dvc.yaml`:
 
-```bash
-poetry install --with dev
-```
+1. `concat_locations`
+2. `extract_stations`
+3. `extract_ports`
+4. `build_timeseries`
+5. `feature_encoding`
+6. `feature_selection`
+7. `visualisation`
+8. `feature_transform`
+9. `train_models`
 
-### 2) Configure Python environment
+Outputs include:
+- dense processed dataset in `data/processed`
+- horizon models in `models/xgb_occupied_h10m.json`, `models/xgb_occupied_h20m.json`, `models/xgb_occupied_h30m.json`
+- horizon metrics in `models/metrics_h10m.json`, `models/metrics_h20m.json`, `models/metrics_h30m.json`
+
+## MLflow Tracking
+
+Training runs can be logged to MLflow via `MLFLOW_TRACKING_URI`.
+
+- Local runner endpoint commonly used: `http://127.0.0.1:5000`
+- This project is configured so tracking is reachable only through a private network path (VPN / protected tunnel), not as a public open endpoint.
+
+Optional environment variables:
+- `MLFLOW_TRACKING_URI`
+- `MLFLOW_EXPERIMENT_NAME` (default: `evbuddy-train-models`)
+
+## Quick Start
+
+Install dependencies:
 
 ```bash
 poetry env use python3.12
+poetry install --with dev
 ```
 
-### 3) Configure DVC remote (example)
-
-Current repo default in `.dvc/config` is a local remote named `local`.
-If needed:
+Configure DVC remote URL in local-only config:
 
 ```bash
-poetry run dvc remote modify --local local url "<your-dvc-remote-url>"
+poetry run dvc remote add --force --local local "<your-dvc-remote-url>"
 ```
 
-## Running the Pipeline
-
-### Pull required artifacts
-
-Pull the raw DVC-tracked data:
-
-```bash
-poetry run dvc pull data/raw.dvc
-```
-
-Or pull everything available in cache:
+Pull data and run pipeline:
 
 ```bash
 poetry run dvc pull
+poetry run dvc repro
 ```
 
-### Reproduce full pipeline
-
-```bash
-poetry run dvc repro -f
-```
-
-### Run specific stages
+Run specific stages:
 
 ```bash
 poetry run dvc repro visualisation
 poetry run dvc repro train_models
 ```
 
-## Training Variants
+## Training Modes
 
-- Main pipeline trainer: `src/models/train_models.py` (Dask + `xgboost.dask`)
-- Baseline trainer script: `src/models/train_models_pandas.py` (pandas + classic XGBoost)
+- Main trainer: `src/models/train_models.py` (Dask + XGBoost)
+- Baseline trainer: `src/models/train_models_pandas.py` (pandas)
 
-Run pandas baseline manually:
+Run baseline manually:
 
 ```bash
 poetry run python -m src.models.train_models_pandas
 ```
 
-Useful env vars for Dask trainer:
+## Testing
 
-- `EV_BUDDY_DASK_N_WORKERS` (default: `3`)
-- `EV_BUDDY_DASK_THREADS_PER_WORKER` (default: based on CPU count)
-
-Useful env var for feature memory profiling:
-
-- `EV_BUDDY_FUNCTION_MEMORY_PROFILE=1` enables function-level memory profiling in `feature_transform`.
-
-## Tests
-
-Run full suite:
+Run all tests:
 
 ```bash
 poetry run pytest -v
 ```
-
-Coverage is enabled via `pyproject.toml` (`--cov=src --cov-report=term-missing`).
 
 Quality gate for model metrics:
 
@@ -162,37 +131,24 @@ Quality gate for model metrics:
 poetry run pytest -v tests/quality/test_metrics_thresholds.py
 ```
 
-## CI / GitHub Actions
+## CI Workflows
 
-- `.github/workflows/ci.yml`: syntax + test workflow
-- `.github/workflows/dvc.yml`: DVC reproduction workflow (self-hosted runner)
-
-Typical DVC CI flow:
-
-1. Checkout
-2. Install Python + Poetry + deps
-3. Configure DVC remote
-4. `dvc pull`
-5. `dvc repro ...`
-6. Metrics quality gate
+- `ci.yml`: syntax + tests
+- `dvc.yml`: DVC repro jobs (PR-scoped jobs plus full repro on `main`)
 
 ## Troubleshooting
 
-Usually `dvc.yaml` and `dvc.lock` are out of sync (stage outputs changed, lock not refreshed).
-
-Fix:
+If `dvc.yaml` and `dvc.lock` diverge:
 
 ```bash
-poetry run dvc repro <changed-stage>
+poetry run dvc repro <stage-name>
 poetry run dvc push
-git add dvc.lock dvc.yaml
+git add dvc.yaml dvc.lock
 git commit -m "sync dvc lock"
 ```
 
-### Dask worker memory restarts / `KilledWorker`
-
-Reduce concurrency:
+If Dask workers hit memory limits:
 
 ```bash
-EV_BUDDY_DASK_N_WORKERS=1 EV_BUDDY_DASK_THREADS_PER_WORKER=1
+EV_BUDDY_DASK_N_WORKERS=1 EV_BUDDY_DASK_THREADS_PER_WORKER=1 poetry run dvc repro train_models
 ```
