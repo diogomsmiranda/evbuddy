@@ -28,7 +28,10 @@ env:
 
 jobs:
   changes:
-    if: github.event_name != 'push'
+    if: |
+      github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.fork == false)
     runs-on: ubuntu-latest
     outputs:
       visualisation: ${{ github.event_name == 'pull_request' && steps.filter.outputs.visualisation || steps.defaults.outputs.visualisation }}
@@ -125,6 +128,7 @@ jobs:
     if: |
       github.event_name == 'workflow_dispatch' ||
       (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.fork == false &&
       needs.changes.outputs.visualisation == 'true')
     runs-on:
       - self-hosted
@@ -170,6 +174,7 @@ jobs:
     if: |
       (github.event_name == 'workflow_dispatch' && github.event.inputs.run_train_models == 'true') ||
       (github.event_name == 'pull_request' &&
+      github.event.pull_request.head.repo.fork == false &&
       needs.changes.outputs.train_models == 'true')
     runs-on:
       - self-hosted
