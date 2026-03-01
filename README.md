@@ -158,3 +158,15 @@ If Dask workers hit memory limits:
 ```bash
 EV_BUDDY_DASK_N_WORKERS=1 EV_BUDDY_DASK_THREADS_PER_WORKER=1 poetry run dvc repro train_models
 ```
+
+## Data Attribution and License
+
+This product or service uses data from the [Open Data BCN portal](https://opendata-ajuntament.barcelona.cat/en).
+
+Source of the data: [Barcelona City Council](https://barcelona.cat/opendata).
+
+License: [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.org/licenses/by/4.0/).
+
+Data has been transformed and adapted in this project (feature engineering, model training, and prediction generation).
+
+This attribution does not imply endorsement by Barcelona City Council of this application or its outputs.
