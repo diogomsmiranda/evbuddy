@@ -13,6 +13,11 @@
 EVBuddy is a reproducible ML pipeline for forecasting EV charging-station availability.
 It combines data engineering, feature pipelines, distributed model training, experiment tracking, and CI automation.
 
+## Live Application
+
+Web frontend is currently available at:
+- https://evbuddy.diogomsmiranda.com
+
 ## Why this project
 
 - Build a reproducible end-to-end pipeline from raw EV station snapshots to trained models.
