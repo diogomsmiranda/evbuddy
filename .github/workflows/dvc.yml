@@ -22,9 +22,9 @@ permissions:
   pull-requests: read
 
 env:
-  PYTHON_BIN: /home/igo/.pyenv/shims/python3.12
-  DVC_REMOTE_URL: /srv/dvc/evbuddy
-  MLFLOW_TRACKING_URI: http://127.0.0.1:5000
+  PYTHON_BIN: ${{ vars.PYTHON_BIN }}
+  DVC_REMOTE_URL: ${{ vars.DVC_REMOTE_URL }}
+  MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_TRACKING_URI }}
 
 jobs:
   changes:
@@ -74,7 +74,7 @@ jobs:
           echo "train_models=true" >> "$GITHUB_OUTPUT"
 
   dvc-full-repro-main:
-    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    if: github.repository_owner == 'diogomsmiranda' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on:
       - self-hosted
       - linux
@@ -126,9 +126,10 @@ jobs:
     needs:
       - changes
     if: |
-      github.event_name == 'workflow_dispatch' ||
+      (github.repository_owner == 'diogomsmiranda' && github.event_name == 'workflow_dispatch') ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.fork == false &&
+      github.repository_owner == 'diogomsmiranda' &&
       needs.changes.outputs.visualisation == 'true')
     runs-on:
       - self-hosted
@@ -172,9 +173,12 @@ jobs:
     needs:
       - changes
     if: |
-      (github.event_name == 'workflow_dispatch' && github.event.inputs.run_train_models == 'true') ||
+      (github.repository_owner == 'diogomsmiranda' &&
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.run_train_models == 'true') ||
       (github.event_name == 'pull_request' &&
       github.event.pull_request.head.repo.fork == false &&
+      github.repository_owner == 'diogomsmiranda' &&
       needs.changes.outputs.train_models == 'true')
     runs-on:
       - self-hosted
