@@ -1,0 +1,6 @@
+outs:
+- md5: b83deac90dd4c65ceb90065773ad75aa.dir
+  size: 8018005
+  nfiles: 14
+  hash: md5
+  path: opendata_datasets_csv

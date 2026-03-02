@@ -108,6 +108,15 @@ poetry run dvc repro train_models
 - `dvc pull` requires remote access credentials.
 - Without remote access, full reproduction requires obtaining the raw input datasets independently and placing them under the expected `data/raw` paths used by `dvc.yaml`.
 
+## Data Materialization Notes
+
+- Pipeline stages materialize tabular artifacts explicitly (for example, `concat_locations` writes `data/interim/locations.csv`).
+- Feature transform writes `data/processed/dense_10min.parquet` by default; it falls back to CSV only when Parquet dependencies are unavailable.
+- DVC tracks declared stage outputs in `dvc.yaml`, not every individual `to_csv()` call in source files.
+- Raw data policy:
+  - `data/raw/opendata_datasets_json`: Git-tracked source snapshots.
+  - `data/raw/opendata_datasets_csv`: DVC-tracked conversion/cache artifacts.
+
 ## CI Workflows
 
 - `ci.yml`: syntax + tests
