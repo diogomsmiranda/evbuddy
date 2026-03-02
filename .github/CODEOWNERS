@@ -1,0 +1,5 @@
+# Default owner for the repository
+* @diogomsmiranda
+
+# Require explicit review from the owner for CI/CD workflow changes
+.github/workflows/* @diogomsmiranda
