@@ -4,6 +4,7 @@ __pycache__
 .coverage
 data/interim/studies
 /models
+!/models/LICENSE.md
 /reports/figures/sparsity
 /reports/figures/distributions/interim/stations_timeseries_selected
 /reports/figures/dimensionality/interim/timeseries

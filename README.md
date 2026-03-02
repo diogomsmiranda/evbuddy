@@ -131,3 +131,11 @@ License: [Creative Commons Attribution 4.0 (CC BY 4.0)](https://creativecommons.
 Data has been transformed and adapted in this project (feature engineering, model training, and prediction generation).
 
 This attribution does not imply endorsement by Barcelona City Council of this application or its outputs.
+
+## Model Artifact License Scope
+
+Only the predictive model artifacts under `models/` are licensed under a non-commercial license:
+
+- [Creative Commons Attribution-NonCommercial 4.0 (CC BY-NC 4.0)](https://creativecommons.org/licenses/by-nc/4.0/)
+
+This scope applies to model files (for example `models/xgb_occupied_h10m.json`, `models/xgb_occupied_h20m.json`, `models/xgb_occupied_h30m.json`) and related derived model outputs in `models/`.
