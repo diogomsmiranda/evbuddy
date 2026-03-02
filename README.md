@@ -16,7 +16,35 @@ It combines data engineering, feature pipelines, distributed model training, exp
 ## Live Application
 
 Web frontend is currently available at:
+
 - https://evbuddy.diogomsmiranda.com
+
+## End-to-End System Scheme
+
+High-level architecture:
+
+```mermaid
+flowchart LR
+  D[Open Data BCN datasets] --> P[evbuddy pipeline with DVC]
+  P --> M[Trained models and metrics]
+  M --> B[evbuddy-backend FastAPI]
+  B --> W[evbuddy-frontend React]
+  B --> A[evbuddy-android Flutter]
+  P -.tracks.-> T[MLflow]
+  P -.versions.-> C[DVC remote]
+  Q[pytest and GitHub Actions] --> P
+```
+
+Detailed architecture and stage-level flow:
+
+- `docs/ARCHITECTURE.md`
+
+Repository roles:
+
+- `evbuddy`: data ingestion, feature engineering, training, evaluation, DVC/CI orchestration.
+- `evbuddy-backend`: serves trained model artifacts for prediction and geocoding/routing-facing endpoints.
+- `evbuddy-frontend`: browser UI for map, station availability, and route-oriented interaction.
+- `evbuddy-android`: mobile Flutter client with map, station clusters, and directions flow.
 
 ## Why this project
 
@@ -24,69 +52,21 @@ Web frontend is currently available at:
 - Version data and models with DVC so results can be reproduced from Git commits.
 - Train horizon-specific classifiers (10m, 20m, 30m) and track quality over time.
 
-## Pipeline at a Glance
+## Tech Stack
 
-```mermaid
-flowchart LR
-  A[data/raw + interim opening-hours csv] --> B[concat_locations]
-  B --> C[extract_stations]
-  C --> D[extract_ports]
-  B --> E[build_timeseries]
-  C --> E
-  D --> E
-  E --> F[feature_encoding]
-  F --> G[feature_selection]
-  F --> H[visualisation]
-  G --> H
-  G --> I[feature_transform]
-  I --> J[train_models]
-  H --> K[reports/figures]
-  J --> L[models and metrics artifacts]
-```
+- Data & features: `pandas`
+- Scalable training flow: `dask` + `distributed`
+- Models: `xgboost`
+- Metrics & evaluation: `scikit-learn`
+- Reproducibility: `dvc`
+- Environment/deps: `poetry`
+- Testing/contracts: `pytest`, `pytest-cov`, `pandera`
+- Experiment tracking: `mlflow`
+- CI automation: GitHub Actions
 
-## Tech Stack and Usage
+Detailed pipeline stages, model artifact outputs, and MLflow runtime configuration are documented in:
 
-| Technology | Where | Why it is used |
-|---|---|---|
-| `pandas` | feature scripts, preprocessing | Tabular data transformation and feature engineering. |
-| `dask` + `distributed` | `src/models/train_models.py` | Larger-than-memory friendly processing and distributed training data flow. |
-| `xgboost` | model training | Binary classification for station occupancy risk at future horizons. |
-| `scikit-learn` | metrics/evaluation | AUC, logloss-adjacent diagnostics, precision/recall/F1/balanced accuracy. |
-| `dvc` | `dvc.yaml`, `dvc.lock`, artifact store | Reproducible stage orchestration and data/model versioning. |
-| `poetry` | `pyproject.toml` | Dependency and virtual environment management. |
-| `pytest` + `pytest-cov` + `pandera` | `tests/` | Unit tests, coverage checks, and data contract/schema validation. |
-| `mlflow` | training stage logging | Experiment tracking for params, metrics, and model artifacts. |
-| GitHub Actions | `.github/workflows/` | CI checks and DVC pipeline execution on self-hosted runner. |
-
-## DVC Stages
-
-From `dvc.yaml`:
-
-1. `concat_locations`
-2. `extract_stations`
-3. `extract_ports`
-4. `build_timeseries`
-5. `feature_encoding`
-6. `feature_selection`
-7. `visualisation`
-8. `feature_transform`
-9. `train_models`
-
-Outputs include:
-- dense processed dataset in `data/processed`
-- horizon models in `models/xgb_occupied_h10m.json`, `models/xgb_occupied_h20m.json`, `models/xgb_occupied_h30m.json`
-- horizon metrics in `models/metrics_h10m.json`, `models/metrics_h20m.json`, `models/metrics_h30m.json`
-
-## MLflow Tracking
-
-Training runs can be logged to MLflow via `MLFLOW_TRACKING_URI`.
-
-- Local runner endpoint commonly used: `http://127.0.0.1:5000`
-- This project is configured so tracking is reachable only through a private network path (VPN / protected tunnel), not as a public open endpoint.
-
-Optional environment variables:
-- `MLFLOW_TRACKING_URI`
-- `MLFLOW_EXPERIMENT_NAME` (default: `evbuddy-train-models`)
+- `CONTRIBUTIONS.md`
 
 ## Quick Start
 
@@ -97,16 +77,21 @@ poetry env use python3.12
 poetry install --with dev
 ```
 
-Configure DVC remote URL in local-only config:
+Configure DVC remote URL in local-only config (private runner / maintainers):
 
 ```bash
 poetry run dvc remote add --force --local local "<your-dvc-remote-url>"
 ```
 
-Pull data and run pipeline:
+If you have access to the DVC remote, pull tracked data/artifacts:
 
 ```bash
 poetry run dvc pull
+```
+
+Run pipeline:
+
+```bash
 poetry run dvc repro
 ```
 
@@ -117,52 +102,23 @@ poetry run dvc repro visualisation
 poetry run dvc repro train_models
 ```
 
-## Training Modes
+## Public Reproducibility Note
 
-- Main trainer: `src/models/train_models.py` (Dask + XGBoost)
-- Baseline trainer: `src/models/train_models_pandas.py` (pandas)
-
-Run baseline manually:
-
-```bash
-poetry run python -m src.models.train_models_pandas
-```
-
-## Testing
-
-Run all tests:
-
-```bash
-poetry run pytest -v
-```
-
-Quality gate for model metrics:
-
-```bash
-poetry run pytest -v tests/quality/test_metrics_thresholds.py
-```
+- This repository is public, but the current DVC remote is private.
+- `dvc pull` requires remote access credentials.
+- Without remote access, full reproduction requires obtaining the raw input datasets independently and placing them under the expected `data/raw` paths used by `dvc.yaml`.
 
 ## CI Workflows
 
 - `ci.yml`: syntax + tests
 - `dvc.yml`: DVC repro jobs (PR-scoped jobs plus full repro on `main`)
 
-## Troubleshooting
+## Contributing
 
-If `dvc.yaml` and `dvc.lock` diverge:
+Contribution process, branch strategy, and PR checklist are documented in:
 
-```bash
-poetry run dvc repro <stage-name>
-poetry run dvc push
-git add dvc.yaml dvc.lock
-git commit -m "sync dvc lock"
-```
-
-If Dask workers hit memory limits:
-
-```bash
-EV_BUDDY_DASK_N_WORKERS=1 EV_BUDDY_DASK_THREADS_PER_WORKER=1 poetry run dvc repro train_models
-```
+- `CONTRIBUTIONS.md`
+- Includes training modes, testing commands, DVC stages, and MLflow setup.
 
 ## Data Attribution and License
 
