@@ -313,3 +313,47 @@ stages:
       hash: md5
       md5: e7bfa29a4c802e359a972f189f70c274
       size: 271010
+  json_to_csv:
+    cmd: poetry run python -m src.data.json_to_csv
+    deps:
+    - path: data/raw/opendata_datasets_json
+      hash: md5
+      md5: 673e7756d0142ff23920b406e988daec.dir
+      size: 12741331
+      nfiles: 15
+    - path: src/data/json_to_csv.py
+      hash: md5
+      md5: 0a9bdbdadbe86156ad71bca13d4b1837
+      size: 1595
+    - path: src/utils/utils.py
+      hash: md5
+      md5: efba7271fa0ac9c56ada701534619156
+      size: 1755
+    outs:
+    - path: data/raw/opendata_datasets_csv
+      hash: md5
+      md5: b83deac90dd4c65ceb90065773ad75aa.dir
+      size: 8018005
+      nfiles: 14
+  derive_opening_hours:
+    cmd: poetry run python -m src.visualisation.granularity
+    deps:
+    - path: data/raw/opendata_datasets_csv
+      hash: md5
+      md5: b83deac90dd4c65ceb90065773ad75aa.dir
+      size: 8018005
+      nfiles: 14
+    - path: src/utils/utils.py
+      hash: md5
+      md5: efba7271fa0ac9c56ada701534619156
+      size: 1755
+    - path: src/visualisation/granularity.py
+      hash: md5
+      md5: f14b413bb62db3aee764c3df7d095740
+      size: 1724
+    outs:
+    - path: data/interim/oh_opendata_datasets_csv
+      hash: md5
+      md5: 6d537567c0501810025c15bea24d0718.dir
+      size: 5148063
+      nfiles: 8

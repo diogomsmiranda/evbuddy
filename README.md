@@ -110,6 +110,8 @@ poetry run dvc repro train_models
 
 ## Data Materialization Notes
 
+- `json_to_csv` converts canonical raw JSON snapshots into `data/raw/opendata_datasets_csv` (DVC stage output).
+- `derive_opening_hours` builds `data/interim/oh_opendata_datasets_csv` from raw CSV snapshots before location concatenation.
 - Pipeline stages materialize tabular artifacts explicitly (for example, `concat_locations` writes `data/interim/locations.csv`).
 - Feature transform writes `data/processed/dense_10min.parquet` by default; it falls back to CSV only when Parquet dependencies are unavailable.
 - DVC tracks declared stage outputs in `dvc.yaml`, not every individual `to_csv()` call in source files.

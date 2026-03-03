@@ -75,15 +75,17 @@ poetry run pytest -v tests/quality/test_metrics_thresholds.py
 
 Current stage sequence from `dvc.yaml`:
 
-1. `concat_locations`
-2. `extract_stations`
-3. `extract_ports`
-4. `build_timeseries`
-5. `feature_encoding`
-6. `feature_selection`
-7. `visualisation`
-8. `feature_transform`
-9. `train_models`
+1. `json_to_csv`
+2. `derive_opening_hours`
+3. `concat_locations`
+4. `extract_stations`
+5. `extract_ports`
+6. `build_timeseries`
+7. `feature_encoding`
+8. `feature_selection`
+9. `visualisation`
+10. `feature_transform`
+11. `train_models`
 
 Primary outputs:
 

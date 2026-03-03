@@ -11,14 +11,16 @@ flowchart LR
   end
 
   subgraph MLPipeline[evbuddy ML and DVC Pipeline]
-    P1[concat_locations]
-    P2[extract_stations and extract_ports]
-    P3[build_timeseries]
-    P4[feature_encoding and feature_selection]
-    P5[visualisation]
-    P6[feature_transform]
-    P7[train_models]
-    P8[models and metrics artifacts]
+    P0[json_to_csv]
+    P1[derive_opening_hours]
+    P2[concat_locations]
+    P3[extract_stations and extract_ports]
+    P4[build_timeseries]
+    P5[feature_encoding and feature_selection]
+    P6[visualisation]
+    P7[feature_transform]
+    P8[train_models]
+    P9[models and metrics artifacts]
   end
 
   subgraph QualityAndTracking[Quality and Tracking]
@@ -39,23 +41,25 @@ flowchart LR
     C2[evbuddy-android Flutter]
   end
 
-  R1 --> P1
-  R2 --> P1
-  P1 --> P2 --> P3 --> P4 --> P6 --> P7 --> P8
-  P4 --> P5
-  P8 --> S1 --> S2 --> S3
+  R1 --> P0 --> P1 --> P2
+  R2 --> P2
+  P2 --> P3 --> P4 --> P5 --> P7 --> P8 --> P9
+  P5 --> P6
+  P9 --> S1 --> S2 --> S3
   S3 --> C1
   S3 --> C2
 
-  P7 --> Q3
-  P8 --> Q4
-  P7 --> Q1
+  P8 --> Q3
+  P9 --> Q4
+  P8 --> Q1
   Q1 --> Q2
-  Q2 --> P7
+  Q2 --> P8
 ```
 
 ## Stage Output Materialization
 
+- `json_to_csv`: writes `data/raw/opendata_datasets_csv` from `data/raw/opendata_datasets_json`.
+- `derive_opening_hours`: writes `data/interim/oh_opendata_datasets_csv` from raw CSV snapshots.
 - `concat_locations`: writes `data/interim/locations.csv` from raw and interim source CSV files.
 - `extract_stations` and `extract_ports`: write `data/interim/stations.csv` and `data/interim/ports.csv`.
 - `build_timeseries` and feature stages: write CSV artifacts under `data/interim/features/`.

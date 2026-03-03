@@ -1,4 +1,22 @@
 stages:
+  json_to_csv:
+    cmd: poetry run python -m src.data.json_to_csv
+    deps:
+      - src/data/json_to_csv.py
+      - src/utils/utils.py
+      - data/raw/opendata_datasets_json
+    outs:
+      - data/raw/opendata_datasets_csv
+
+  derive_opening_hours:
+    cmd: poetry run python -m src.visualisation.granularity
+    deps:
+      - src/visualisation/granularity.py
+      - src/utils/utils.py
+      - data/raw/opendata_datasets_csv
+    outs:
+      - data/interim/oh_opendata_datasets_csv
+
   concat_locations:
     cmd: poetry run python -m src.data.concat_csv
     deps:
