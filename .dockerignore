@@ -1,0 +1,14 @@
+.git
+.github
+.dvc
+.venv
+__pycache__
+.pytest_cache
+.mypy_cache
+.coverage
+mlruns
+mlflow.db
+reports/figures
+data/interim/studies
+data/processed
+models

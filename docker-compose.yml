@@ -1,0 +1,81 @@
+name: evbuddy
+
+services:
+  evbuddy-backend:
+    build:
+      context: ${EVBUDDY_BACKEND_CONTEXT:-../evbuddy-backend}
+      dockerfile: Dockerfile
+    image: evbuddy/backend:latest
+    restart: unless-stopped
+    stop_grace_period: 15s
+    environment:
+      EV_BUDDY_PROCESSED_PARQUET: /workspace/data/processed/dense_10min.parquet
+      EV_BUDDY_STATIONS_CSV: /workspace/data/interim/stations.csv
+      EV_BUDDY_MODELS_DIR: /workspace/models
+      EV_BUDDY_ALLOWED_ORIGINS: ${EV_BUDDY_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
+      EV_BUDDY_BACKEND_CACHE_DIR: /workspace/backend_cache
+      EV_BUDDY_DEFAULT_DISPLAY_HORIZON_MINUTES: ${EV_BUDDY_DEFAULT_DISPLAY_HORIZON_MINUTES:-20}
+      EV_BUDDY_MAPBOX_GEOCODING_TOKEN: ${EV_BUDDY_MAPBOX_GEOCODING_TOKEN:-}
+      EV_BUDDY_GEOCODING_COUNTRY: ${EV_BUDDY_GEOCODING_COUNTRY:-es}
+      EV_BUDDY_GEOCODING_LANGUAGE: ${EV_BUDDY_GEOCODING_LANGUAGE:-en}
+      EV_BUDDY_GEOCODING_BBOX: ${EV_BUDDY_GEOCODING_BBOX:-2.052,41.320,2.228,41.470}
+      EV_BUDDY_RATE_LIMIT_WINDOW_SECONDS: ${EV_BUDDY_RATE_LIMIT_WINDOW_SECONDS:-60}
+      EV_BUDDY_RATE_LIMIT_STATIONS_PER_WINDOW: ${EV_BUDDY_RATE_LIMIT_STATIONS_PER_WINDOW:-30}
+      EV_BUDDY_RATE_LIMIT_GEOCODE_PER_WINDOW: ${EV_BUDDY_RATE_LIMIT_GEOCODE_PER_WINDOW:-20}
+      EV_BUDDY_RATE_LIMIT_PREDICT_PER_WINDOW: ${EV_BUDDY_RATE_LIMIT_PREDICT_PER_WINDOW:-10}
+    volumes:
+      - ./data:/workspace/data:ro
+      - ./models:/workspace/models:ro
+      - evbuddy_backend_cache:/workspace/backend_cache
+    ports:
+      - "127.0.0.1:8000:8000"
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=3)"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+
+  evbuddy-frontend:
+    build:
+      context: ${EVBUDDY_FRONTEND_CONTEXT:-../evbuddy-frontend}
+      dockerfile: Dockerfile
+      args:
+        VITE_API_BASE_URL: ${VITE_API_BASE_URL:-http://localhost:8000}
+        VITE_MAPBOX_ACCESS_TOKEN: ${VITE_MAPBOX_ACCESS_TOKEN:-}
+    image: evbuddy/frontend:latest
+    restart: unless-stopped
+    stop_grace_period: 10s
+    depends_on:
+      evbuddy-backend:
+        condition: service_healthy
+    ports:
+      - "127.0.0.1:5173:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://127.0.0.1/ >/dev/null 2>&1 || exit 1"]
+      interval: 20s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+
+  # Optional ML profile: run DVC/Poetry commands in-container against this repo.
+  evbuddy-pipeline:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: evbuddy/pipeline:latest
+    working_dir: /app
+    environment:
+      EV_BUDDY_N_JOBS: ${EV_BUDDY_N_JOBS:-2}
+      MLFLOW_TRACKING_URI: ${MLFLOW_TRACKING_URI:-}
+      DVC_REMOTE_URL: ${DVC_REMOTE_URL:-}
+      DVC_REMOTE_NAME: ${DVC_REMOTE_NAME:-local}
+    volumes:
+      - .:/app
+    stdin_open: true
+    tty: true
+    command: ["bash", "-lc", "echo 'Pipeline container ready. Use: docker compose --profile ml run --rm evbuddy-pipeline <cmd>' && sleep infinity"]
+    profiles: ["ml"]
+
+volumes:
+  evbuddy_backend_cache:

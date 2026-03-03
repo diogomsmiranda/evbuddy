@@ -19,6 +19,10 @@ Web frontend is currently available at:
 
 - https://evbuddy.diogomsmiranda.com
 
+Container deployment runbook:
+
+- `docs/DEPLOYMENT_RUNBOOK.md`
+
 ## End-to-End System Scheme
 
 High-level architecture:
