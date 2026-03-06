@@ -41,7 +41,7 @@ Edit `.env.compose`:
 
 ## 3. Data and Model Materialization
 
-If `data/` and `models/` are not already materialized on host, pull them via the optional pipeline container:
+If `data/` and `models/` are not already materialized on host, pull serving assets via the optional pipeline container:
 
 ```bash
 cd /srv/evbuddy-serving
@@ -49,9 +49,16 @@ docker compose --env-file .env.compose --profile ml run --rm evbuddy-pipeline ba
 if [ -n "$DVC_REMOTE_URL" ]; then
   poetry run dvc remote add --force --local "$DVC_REMOTE_NAME" "$DVC_REMOTE_URL";
 fi
-poetry run dvc pull
+poetry run dvc pull \
+  data/processed/dense_10min.parquet \
+  data/interim/stations.csv \
+  models/xgb_occupied_h10m.json \
+  models/xgb_occupied_h20m.json \
+  models/xgb_occupied_h30m.json
 '
 ```
+
+Use full `dvc pull` only when the remote is known to contain every tracked artifact in the current `dvc.lock`.
 
 ## 4. Build and Start Containers
 
@@ -129,6 +136,60 @@ Run pipeline stages in container:
 cd /srv/evbuddy-serving
 docker compose --env-file .env.compose --profile ml run --rm evbuddy-pipeline poetry run dvc repro train_models
 ```
+
+## 9. Common Docker Commands
+
+Container status:
+
+```bash
+cd /srv/evbuddy-serving
+docker compose --env-file .env.compose ps
+docker ps -a
+```
+
+Logs:
+
+```bash
+cd /srv/evbuddy-serving
+docker compose --env-file .env.compose logs --tail=100 evbuddy-backend
+docker compose --env-file .env.compose logs --tail=100 evbuddy-frontend
+docker compose --env-file .env.compose logs -f evbuddy-backend evbuddy-frontend
+```
+
+Restart or rebuild:
+
+```bash
+cd /srv/evbuddy-serving
+docker compose --env-file .env.compose restart evbuddy-backend
+docker compose --env-file .env.compose restart evbuddy-frontend
+docker compose --env-file .env.compose up -d --build evbuddy-backend evbuddy-frontend
+docker compose --env-file .env.compose down
+```
+
+Health checks:
+
+```bash
+curl -fsS http://127.0.0.1:8000/health
+docker inspect --format='{{.Name}} {{if .State.Health}}{{.State.Health.Status}}{{else}}no-healthcheck{{end}}' $(docker compose --env-file .env.compose ps -q)
+```
+
+Shell access:
+
+```bash
+cd /srv/evbuddy-serving
+docker compose --env-file .env.compose exec evbuddy-backend bash
+docker compose --env-file .env.compose exec evbuddy-frontend sh
+```
+
+Cleanup:
+
+```bash
+docker image prune -f
+docker container prune -f
+docker system df
+```
+
+Use `docker system prune -a` only when you intentionally want to remove unused images, build cache, stopped containers, and networks.
 
 Current ops model:
 
