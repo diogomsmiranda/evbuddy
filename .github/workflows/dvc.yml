@@ -11,11 +11,6 @@ on:
         required: false
         default: false
         type: boolean
-  pull_request:
-    types:
-      - opened
-      - synchronize
-      - reopened
 
 permissions:
   contents: read
@@ -27,52 +22,6 @@ env:
   MLFLOW_TRACKING_URI: ${{ vars.MLFLOW_TRACKING_URI }}
 
 jobs:
-  changes:
-    if: |
-      github.event_name == 'workflow_dispatch' ||
-      (github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.fork == false)
-    runs-on: ubuntu-latest
-    outputs:
-      visualisation: ${{ github.event_name == 'pull_request' && steps.filter.outputs.visualisation || steps.defaults.outputs.visualisation }}
-      train_models: ${{ github.event_name == 'pull_request' && steps.filter.outputs.train_models || steps.defaults.outputs.train_models }}
-    steps:
-      - name: Checkout
-        if: github.event_name == 'pull_request'
-        uses: actions/checkout@v4
-
-      - name: Detect changed paths (PR)
-        if: github.event_name == 'pull_request'
-        id: filter
-        uses: dorny/paths-filter@v3
-        with:
-          filters: |
-            visualisation:
-              - 'src/data/**'
-              - 'src/features/**'
-              - 'src/visualisation/**'
-              - 'src/utils/**'
-              - 'dvc.yaml'
-              - 'dvc.lock'
-              - 'pyproject.toml'
-              - 'poetry.lock'
-            train_models:
-              - 'src/data/**'
-              - 'src/features/**'
-              - 'src/models/**'
-              - 'src/utils/**'
-              - 'dvc.yaml'
-              - 'dvc.lock'
-              - 'pyproject.toml'
-              - 'poetry.lock'
-
-      - name: Default filter outputs (non-PR)
-        if: github.event_name != 'pull_request'
-        id: defaults
-        run: |
-          echo "visualisation=true" >> "$GITHUB_OUTPUT"
-          echo "train_models=true" >> "$GITHUB_OUTPUT"
-
   dvc-full-repro-main:
     if: github.repository_owner == 'diogomsmiranda' && github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on:
@@ -123,14 +72,7 @@ jobs:
           poetry run pytest -v tests/quality/test_metrics_thresholds.py
 
   dvc-visualisation:
-    needs:
-      - changes
-    if: |
-      (github.repository_owner == 'diogomsmiranda' && github.event_name == 'workflow_dispatch') ||
-      (github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.fork == false &&
-      github.repository_owner == 'diogomsmiranda' &&
-      needs.changes.outputs.visualisation == 'true')
+    if: github.repository_owner == 'diogomsmiranda' && github.event_name == 'workflow_dispatch'
     runs-on:
       - self-hosted
       - linux
@@ -170,16 +112,10 @@ jobs:
           poetry run dvc repro visualisation
 
   dvc-train-models:
-    needs:
-      - changes
     if: |
-      (github.repository_owner == 'diogomsmiranda' &&
-      github.event_name == 'workflow_dispatch' &&
-      github.event.inputs.run_train_models == 'true') ||
-      (github.event_name == 'pull_request' &&
-      github.event.pull_request.head.repo.fork == false &&
       github.repository_owner == 'diogomsmiranda' &&
-      needs.changes.outputs.train_models == 'true')
+      github.event_name == 'workflow_dispatch' &&
+      github.event.inputs.run_train_models == 'true'
     runs-on:
       - self-hosted
       - linux
