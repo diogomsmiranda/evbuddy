@@ -11,6 +11,8 @@ services:
     environment:
       EV_BUDDY_PROCESSED_PARQUET: /workspace/data/processed/dense_10min.parquet
       EV_BUDDY_STATIONS_CSV: /workspace/data/interim/stations.csv
+      EV_BUDDY_LOCATIONS_CSV: /workspace/data/interim/locations.csv
+      EV_BUDDY_PORTS_CSV: /workspace/data/interim/ports.csv
       EV_BUDDY_MODELS_DIR: /workspace/models
       EV_BUDDY_ALLOWED_ORIGINS: ${EV_BUDDY_ALLOWED_ORIGINS:-http://localhost:5173,http://127.0.0.1:5173}
       EV_BUDDY_BACKEND_CACHE_DIR: /workspace/backend_cache
